@@ -1,0 +1,29 @@
+{
+  "name": "tehreer",
+  "version": "0.1.0",
+  "description": "Tehreer text engine for the web: Tehreer Core compiled to WebAssembly with a TypeScript API.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "sideEffects": false,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build:wasm": "bash scripts/build-wasm.sh",
+    "build": "tsc -p tsconfig.json && node scripts/copy-wasm.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tests/tsconfig.json --noEmit",
+    "test": "tsc -p tests/tsconfig.json && node scripts/copy-wasm.mjs build/src/wasm && node --test build/tests/"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.9.0"
+  }
+}
