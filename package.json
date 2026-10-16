@@ -18,7 +18,9 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "LICENSE",
+    "NOTICE"
   ],
   "scripts": {
     "build:wasm": "bash scripts/build-wasm.sh",

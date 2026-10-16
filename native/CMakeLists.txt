@@ -1,8 +1,20 @@
+# Copyright (C) 2026 Muhammad Tayyab Akram
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 cmake_minimum_required(VERSION 3.16)
 project(TehreerWasm C CXX)
 
-# Tehreer Core checkout.
-set(TEHREER_CORE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../Tehreer-Core" CACHE PATH "Tehreer Core")
 # Directory with freetype, harfbuzz, libunibreak and SheenBidi, as TR_DEPS_DIR of Core expects.
 set(TR_DEPS_DIR "" CACHE PATH "Pre-fetched sources of the dependencies of Core")
 # Where the generated module is written.
@@ -12,7 +24,17 @@ set(TR_CONFIG_UNITY ON CACHE BOOL "" FORCE)
 set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 
-add_subdirectory(${TEHREER_CORE_DIR} tehreer-core EXCLUDE_FROM_ALL)
+include(FetchContent)
+
+# Tehreer Core, fetched at a fixed commit. Set FETCHCONTENT_SOURCE_DIR_TEHREERCORE to use a local
+# checkout instead.
+FetchContent_Declare(
+  TehreerCore
+  GIT_REPOSITORY https://github.com/Tehreer/Tehreer-Core.git
+  GIT_TAG 1d21938eff8931388974d744bc094800501c2a0a
+  EXCLUDE_FROM_ALL
+)
+FetchContent_MakeAvailable(TehreerCore)
 
 add_executable(tehreer Module.c)
 set_target_properties(tehreer PROPERTIES

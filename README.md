@@ -38,20 +38,21 @@ src/
   collections/ List (what the lists of Core are), CoreList, CoreView
   internal/    Module, Memory, Struct/Structs (layouts of the C structs), Callbacks, NativeFunctions.ts (generated)
   wasm/        tehreer.js, tehreer.wasm (generated, git-ignored)
-tests/         node:test suites; they use the fixture fonts of Tehreer-Core/Tests/Fonts
+tests/         node:test suites; they use the fixture fonts of Core's Tests/Fonts (fetched into build/wasm/_deps)
 ```
 
 ## Build and test
 
 ```bash
 brew install emscripten                  # once
-bash scripts/build-wasm.sh               # needs ../Tehreer-Core with a configured build/_deps
+bash scripts/build-wasm.sh               # fetches Core and its dependencies (network needed)
 npm install
 npm test                                 # compiles tests, runs them with node --test
 npm run build                            # dist/ (JavaScript, declarations and the module)
 ```
 
-`TEHREER_CORE` and `TR_DEPS_SRC` change where Core and its dependency sources come from.
+`TEHREER_CORE` uses a local checkout of Core instead of the commit set in `native/CMakeLists.txt`;
+`TR_DEPS_SRC` points to pre-fetched dependency sources.
 `scripts/generate-bindings.mjs` reads `Headers/Tehreer/*.h` and writes the list of exported
 functions and their declarations, so a change of the public API shows up as a type error here.
 
