@@ -26,11 +26,13 @@ frame.draw(renderer, canvas.getContext("2d")!, 0, 0);
 
 ```
 native/        CMake and exports.json (generated): Core + its dependencies as one module
-scripts/       build-wasm.sh, generate-bindings.mjs, copy-wasm.mjs
+scripts/       build-wasm.sh, generate-bindings.mjs, generate-unicode-enums.mjs, copy-wasm.mjs
 src/
   graphics/    FontFile, Typeface, TypefaceManager, TypeFamily, Renderer, GlyphCache, GlyphImage, Path
   layout/      TText, TMutableText, Typesetter, FrameResolver, ComposedFrame/Line, GlyphRun, LineLocator, Replacement
   sfnt/        ShapingEngine, ShapingResult, FontFeatures, SfntTag
+  unicode/     BidiAlgorithm, BidiParagraph, BidiLine, BidiRun, BidiPair, ScriptClassifier, ScriptRun, CodePoint,
+               BidiClass/GeneralCategory/Script (SheenBidi, as in Tehreer-Android; enums.ts is generated)
   drawing/     DrawingContext, CanvasPainter (what Core's draw callbacks do to a 2D context)
   collections/ List (what the lists of Core are), CoreList, CoreView
   internal/    Module, Memory, Struct/Structs (layouts of the C structs), Callbacks, NativeFunctions.ts (generated)
@@ -83,7 +85,8 @@ functions and their declarations, so a change of the public API shows up as a ty
 
 ## Not included yet
 
-- `TRSheenBidi` (Core's text analysis through SheenBidi) and the Unicode wrappers of the other platforms.
+- `TRTextGetSheenBidiText` (the experimental text API of SheenBidi on a `TText`). The `unicode` package wraps the
+  classic API of SheenBidi, the same classes as Tehreer-Android.
 - Parsers of SFNT tables (`head`, `hhea`, `maxp`, `name`, `OS/2`, `post`); `Typeface.getTableData()` is there.
 - FreeType is built without libpng, so bitmap fonts with PNG glyphs (`CBDT`) have no images.
   Color fonts with outlines (`COLR`) work.

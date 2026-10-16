@@ -60,3 +60,14 @@ export type { VisualEdge } from "./layout/ComposedLine.js";
 export { GlyphRun } from "./layout/GlyphRun.js";
 export { LineLocator } from "./layout/LineLocator.js";
 export { BreakMode, ReplacementKind, TextAlignment, TruncationPlace, VerticalAlignment } from "./layout/enums.js";
+
+export { BaseDirection } from "./unicode/BaseDirection.js";
+export { BidiAlgorithm } from "./unicode/BidiAlgorithm.js";
+export { BidiParagraph } from "./unicode/BidiParagraph.js";
+export { BidiLine } from "./unicode/BidiLine.js";
+export { BidiRun } from "./unicode/BidiRun.js";
+export { BidiPair } from "./unicode/BidiPair.js";
+export { ScriptClassifier } from "./unicode/ScriptClassifier.js";
+export { ScriptRun } from "./unicode/ScriptRun.js";
+export { CodePoint } from "./unicode/CodePoint.js";
+export { BidiClass, GeneralCategory, Script } from "./unicode/enums.js";

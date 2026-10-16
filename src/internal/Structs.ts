@@ -91,6 +91,12 @@ export const TRDrawCallbacks = struct({
   endShadow: ptr,
 });
 
+/* The structs of SheenBidi. `SBUInteger` is a pointer sized integer, so it is 32 bits wide. */
+export const SBCodepointSequence = struct({ stringEncoding: u32, stringBuffer: ptr, stringLength: ptr });
+export const SBRun = struct({ offset: ptr, length: ptr, level: u8 });
+export const SBMirrorAgent = struct({ index: ptr, mirror: u32, codepoint: u32 });
+export const SBScriptAgent = struct({ offset: ptr, length: ptr, script: u8 });
+
 /** All structs by their names, which the layout test goes through. */
 export const structs = {
   TRStringView,
@@ -110,4 +116,8 @@ export const structs = {
   TRReplacementCallbacks,
   TRPathCallbacks,
   TRDrawCallbacks,
+  SBCodepointSequence,
+  SBRun,
+  SBMirrorAgent,
+  SBScriptAgent,
 } as const;

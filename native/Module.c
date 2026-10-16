@@ -39,6 +39,8 @@ const char *tw_version(void)
 #include <stddef.h>
 #include <stdio.h>
 
+#include <SheenBidi/SheenBidi.h>
+
 #include <Tehreer/Tehreer.h>
 
 #define BEGIN(type)     count += snprintf(buffer + count, capacity - count, \
@@ -161,6 +163,30 @@ int tw_layout(char *buffer, int capacity)
     FIELD(TRDrawCallbacks, drawReplacement, drawReplacement);
     FIELD(TRDrawCallbacks, beginShadow, beginShadow);
     FIELD(TRDrawCallbacks, endShadow, endShadow);
+    END();
+
+    BEGIN(SBCodepointSequence);
+    FIELD(SBCodepointSequence, stringEncoding, stringEncoding);
+    FIELD(SBCodepointSequence, stringBuffer, stringBuffer);
+    FIELD(SBCodepointSequence, stringLength, stringLength);
+    END();
+
+    BEGIN(SBRun);
+    FIELD(SBRun, offset, offset);
+    FIELD(SBRun, length, length);
+    FIELD(SBRun, level, level);
+    END();
+
+    BEGIN(SBMirrorAgent);
+    FIELD(SBMirrorAgent, index, index);
+    FIELD(SBMirrorAgent, mirror, mirror);
+    FIELD(SBMirrorAgent, codepoint, codepoint);
+    END();
+
+    BEGIN(SBScriptAgent);
+    FIELD(SBScriptAgent, offset, offset);
+    FIELD(SBScriptAgent, length, length);
+    FIELD(SBScriptAgent, script, script);
     END();
 
     count += snprintf(buffer + count, capacity - count, "}");

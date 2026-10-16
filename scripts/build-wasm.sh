@@ -18,7 +18,6 @@ if ! command -v emcmake >/dev/null; then
 fi
 
 # Core expects the dependencies in folders named after them.
-node "$root/scripts/generate-bindings.mjs"
 mkdir -p "$deps" "$root/src/wasm"
 for pair in freetype:freetype harfbuzz:harfbuzz libunibreak:libunibreak SheenBidi:sheenbidi; do
     name="${pair%%:*}"
@@ -29,6 +28,8 @@ for pair in freetype:freetype harfbuzz:harfbuzz libunibreak:libunibreak SheenBid
     fi
     ln -sfn "$deps_src/$dir-src" "$deps/$name"
 done
+
+SHEENBIDI_DIR="$deps/SheenBidi" node "$root/scripts/generate-bindings.mjs"
 
 emcmake cmake -S "$root/native" -B "$build" -DCMAKE_BUILD_TYPE=Release \
     -DTEHREER_CORE_DIR="$core" -DTR_DEPS_DIR="$deps"
