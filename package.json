@@ -26,7 +26,7 @@
     "build:wasm": "bash scripts/build-wasm.sh",
     "build": "tsc -p tsconfig.json && node scripts/copy-wasm.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tests/tsconfig.json --noEmit",
-    "test": "tsc -p tests/tsconfig.json && node scripts/copy-wasm.mjs build/src/wasm && node --test build/tests/"
+    "test": "tsc -p tests/tsconfig.json && node scripts/copy-wasm.mjs build/src/wasm && node --test \"build/tests/*.test.js\""
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
