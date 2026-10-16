@@ -23,10 +23,13 @@ const widgets = fileURLToPath(new URL("../src/react/index.ts", import.meta.url))
 
 export default defineConfig({
   plugins: [react()],
-  resolve: { alias: [
+  resolve: {
+    dedupe: ["react", "react-dom"],
+    alias: [
       { find: "tehreer/react", replacement: widgets },
       { find: /^tehreer$/, replacement: library },
-    ] },
+    ],
+  },
   server: { fs: { allow: [".."] } },
   optimizeDeps: { exclude: ["tehreer"] },
   build: { target: "esnext" },
