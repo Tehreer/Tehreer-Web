@@ -1,7 +1,7 @@
 # Tehreer for the web
 
 Tehreer Core compiled to WebAssembly with Emscripten, and a TypeScript API over all of its public
-headers, shaped like the ones of Tehreer-Android and Tehreer-Cocoa.
+headers, shaped like the ones of Tehreer-Android and Tehreer-Cocoa. React widgets (`TLabel`, `TTextView`) are in the `tehreer/react` entry point.
 
 ```ts
 import { initialize, FontFile, Typesetter, FrameResolver, Renderer } from "tehreer";
@@ -33,6 +33,7 @@ src/
   sfnt/        ShapingEngine, ShapingResult, FontFeatures, SfntTag
   unicode/     BidiAlgorithm, BidiParagraph, BidiLine, BidiRun, BidiPair, ScriptClassifier, ScriptRun, CodePoint,
                BidiClass/GeneralCategory/Script (SheenBidi, as in Tehreer-Android; enums.ts is generated)
+  react/       TLabel, TTextView (the `tehreer/react` entry point; React is an optional peer dependency)
   drawing/     DrawingContext, CanvasPainter (what Core's draw callbacks do to a 2D context)
   collections/ List (what the lists of Core are), CoreList, CoreView
   internal/    Module, Memory, Struct/Structs (layouts of the C structs), Callbacks, NativeFunctions.ts (generated)
@@ -82,6 +83,39 @@ functions and their declarations, so a change of the public API shows up as a ty
   from the call that caused them.
 - **Drawing** goes into a `CanvasRenderingContext2D` or an `OffscreenCanvasRenderingContext2D`. Core
   multiplies positions by `renderer.renderScale`, then the transform of the context applies.
+
+## React widgets
+
+```tsx
+import { TextAlignment } from "tehreer";
+import { TLabel, TTextView } from "tehreer/react";
+
+<TLabel text="Hello" typeface={typeface} textSize={24} textColor="#14553A" maxLines={2} isTruncationEnabled />
+
+<TTextView attributedText={text} typeface={typeface} textSize={32} isJustificationEnabled
+           separatorColor="#C9CBC1" style={{ height: 400 }}
+           onLinkClick={(userData, from, to) => {}} />
+```
+
+They follow the widgets of Tehreer-Android and Tehreer-Cocoa: the same property names (`typeface`, `textSize`,
+`textColor`, `textAlignment`, `maxLines`, `isTruncationEnabled`, `truncationMode/Place`, `extraLineSpacing`,
+`lineHeightMultiplier`, `isJustificationEnabled`, `justificationLevel`, `separatorColor`, the draw, stroke and
+shadow settings) and the same sources of text: a `typesetter` (preferred, stays yours), an `attributedText`
+(a `TText`) or a plain `text`. `await initialize()` and load the typeface first. A reference gives
+`composedFrame`, `indexOfCodeUnit(x, y)` and `getSelectionRects()`; the text view adds `firstVisibleCodeUnitIndex`,
+`scrollToCodeUnit()`.
+
+- `TLabel` fills its container's width, is as tall as its text (or `height`), and draws into a canvas at the pixel ratio.
+- `TTextView` lays the whole text out for its width and gives every line in view a canvas of its own, as big as what the line
+  draws (its box united with its ink box from the `LineLocator`). The canvases are recycled as lines scroll in and out, so there are only
+  as many as fit the screen, and scrolling draws nothing but the lines that come into view. It keeps the first visible line in place
+  when the width changes. `scrollContainer="self"` (the default) makes it a scrolling box; `scrollContainer="window"` makes it as tall
+  as its text and lets the page scroll it, which suits a sticky header and sidebar. `useVisibleRange()` and `scrollContentTo()` are the same
+  window-scroll helpers, for lists that draw only what is in view. Runs of the attributed text with a non-zero
+  `userData` are links: they are highlighted while pressed and reported to `onLinkClick`.
+- The widgets work with props and callbacks only, like a controlled input. `highlights` (ranges with an optional color) are drawn behind the text and only repaint when they change; `onHoverChange(index)`, `onPressChange(index)` and `onTap(index)` report the code unit under the pointer (a tap on empty space gives `undefined`). Keep the hovered, pressed or selected range in your own state and pass it back as `highlights`: the demo builds a link label and a verse-selecting Quran view this way, as Android does with subclasses.
+- Pass stable values (memoize the typeface and text): a widget lays out again when a property changes identity.
+- Colors are `#rgb`, `#rrggbb`, `#aarrggbb` text or `0xAARRGGBB` numbers.
 
 ## Not included yet
 

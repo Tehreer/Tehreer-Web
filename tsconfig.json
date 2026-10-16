@@ -10,6 +10,7 @@
     "sourceMap": true,
     "stripInternal": true,
     "strict": true,
+    "jsx": "react-jsx",
     "noUncheckedIndexedAccess": true,
     "noImplicitOverride": true,
     "noImplicitReturns": true,
