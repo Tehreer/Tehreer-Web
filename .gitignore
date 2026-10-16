@@ -4,3 +4,5 @@ build
 .DS_Store
 src/wasm/tehreer.js
 src/wasm/tehreer.wasm
+.vercel
+.env*
