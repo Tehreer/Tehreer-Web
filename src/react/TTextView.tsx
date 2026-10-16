@@ -322,7 +322,12 @@ export const TTextView = forwardRef<TTextViewHandle, TTextViewProps>(function TT
   };
 
   useLayoutEffect(() => {
+    // With no width there is nothing to lay out, and the layout of the last effect is released as this one starts,
+    // so it must not stay in the state, where a render would read a frame that is gone.
     if (width <= 0) {
+      setLines(NO_LINES);
+      setLayout(undefined);
+      setContentHeight(0);
       return undefined;
     }
     rememberAnchor(layoutRef.current);
