@@ -6,7 +6,7 @@ import {
   TMutableText,
   Typesetter,
   type TextAttributes,
-} from "tehreer";
+} from "@tehreer/web";
 import { z } from "zod";
 import { getTypeface } from "./registry.js";
 import { colorString, parseColor, parseTag, sfntTag, typefaceId } from "./schemas.js";

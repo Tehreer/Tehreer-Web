@@ -15,14 +15,14 @@
  */
 
 import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { Renderer, type Typeface } from "tehreer";
+import { Renderer, type Typeface } from "@tehreer/web";
 import { PageHeader, WhenReady } from "../components/Page";
 import { FontSelect } from "../components/FontSelect";
 import { GlyphCanvas } from "../components/GlyphCanvas";
 import { GlyphDialog } from "../components/GlyphDialog";
 import { TEXT_FONTS, useFontFile } from "../lib/fonts";
 import { useEngineObject } from "../lib/styledText";
-import { scrollContentTo, useVisibleRange } from "tehreer/react";
+import { scrollContentTo, useVisibleRange } from "@tehreer/web/react";
 import { stickyStackHeight } from "../components/Sticky";
 
 const MIN_CELL_WIDTH = 112;

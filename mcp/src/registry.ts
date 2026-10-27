@@ -1,7 +1,7 @@
 import { open } from "node:fs/promises";
 import { isAbsolute, relative, resolve } from "node:path";
 import { isIP } from "node:net";
-import { FontFile, Typeface, TypefaceManager } from "tehreer";
+import { FontFile, Typeface, TypefaceManager } from "@tehreer/web";
 
 const MAX_FONTS = 64;
 const MAX_TYPEFACES = 1024;

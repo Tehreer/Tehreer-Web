@@ -15,7 +15,7 @@
  */
 
 import { useMemo, useState } from "react";
-import { BaseDirection, BidiAlgorithm, type BidiRun } from "tehreer";
+import { BaseDirection, BidiAlgorithm, type BidiRun } from "@tehreer/web";
 import { PageHeader, WhenReady, useEngineReady } from "../components/Page";
 
 type Direction = "auto" | "ltr" | "rtl";

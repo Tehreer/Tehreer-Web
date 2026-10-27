@@ -3,7 +3,7 @@ import {
   BidiAlgorithm,
   BidiClass,
   type BidiRun,
-} from "tehreer";
+} from "@tehreer/web";
 
 /** Base direction choices exposed to the tools. */
 export type Base = "auto" | "auto-rtl" | "ltr" | "rtl";

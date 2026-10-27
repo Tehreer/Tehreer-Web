@@ -1,19 +1,50 @@
 {
-  "name": "tehreer-mcp",
+  "name": "@tehreer/mcp",
   "version": "0.1.0",
-  "private": true,
-  "description": "MCP server that exposes Tehreer-Web (fonts, Unicode, bidi) to LLM clients.",
+  "description": "MCP server that exposes Tehreer (fonts, Unicode, bidi, shaping, layout, SVG rendering) to LLM clients.",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Tehreer/Tehreer-Web.git",
+    "directory": "mcp"
+  },
+  "homepage": "https://github.com/Tehreer/Tehreer-Web/tree/main/mcp#readme",
+  "bugs": "https://github.com/Tehreer/Tehreer-Web/issues",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "fonts",
+    "text-layout",
+    "bidi",
+    "opentype",
+    "svg"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "type": "module",
-  "bin": { "tehreer-mcp": "./build/server.js" },
+  "bin": {
+    "tehreer-mcp": "./build/server.js"
+  },
+  "files": [
+    "build",
+    "LICENSE",
+    "NOTICE"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "start": "node build/server.js",
     "smoke": "node scripts/smoke.mjs",
-    "test": "node --test tests/"
+    "test": "node --test tests/",
+    "prepack": "node scripts/copy-legal.mjs",
+    "prepublishOnly": "npm run build"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.0",
-    "tehreer": "file:..",
+    "@tehreer/web": "^0.1.0",
     "zod": "^3.25.0"
   },
   "devDependencies": {

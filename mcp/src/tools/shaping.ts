@@ -1,5 +1,5 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { Renderer, Script, ScriptClassifier, SfntTag, ShapingEngine, ShapingOrder, WritingDirection } from "tehreer";
+import { Renderer, Script, ScriptClassifier, SfntTag, ShapingEngine, ShapingOrder, WritingDirection } from "@tehreer/web";
 import { z } from "zod";
 import { getTypeface } from "../registry.js";
 import { guarded } from "../result.js";

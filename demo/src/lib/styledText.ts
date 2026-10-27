@@ -15,7 +15,7 @@
  */
 
 import { useEffect, useState } from "react";
-import { Color, TMutableText } from "tehreer";
+import { Color, TMutableText } from "@tehreer/web";
 import type { Ayah } from "../data/surah";
 import { loadEngine } from "./fonts";
 

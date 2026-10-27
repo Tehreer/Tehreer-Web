@@ -15,7 +15,7 @@
  */
 
 import { useMemo } from "react";
-import { DrawStyle, TextAlignment } from "tehreer";
+import { DrawStyle, TextAlignment } from "@tehreer/web";
 import { LinkableLabel } from "../components/LinkableLabel";
 import { PageHeader, WhenReady } from "../components/Page";
 import { ARTICLE_REFERENCE, ARTICLE_SEGMENTS, ARTICLE_TITLE } from "../data/article";

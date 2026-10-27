@@ -15,7 +15,7 @@
  */
 
 import { Fragment, useCallback, useMemo, useState } from "react";
-import { Renderer, ShapingEngine, SfntTag, type Typeface } from "tehreer";
+import { Renderer, ShapingEngine, SfntTag, type Typeface } from "@tehreer/web";
 import { PageHeader, WhenReady } from "../components/Page";
 import { FontSelect } from "../components/FontSelect";
 import { GlyphCanvas } from "../components/GlyphCanvas";

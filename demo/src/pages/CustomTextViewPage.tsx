@@ -15,7 +15,7 @@
  */
 
 import { useMemo, useState } from "react";
-import { TextAlignment } from "tehreer";
+import { TextAlignment } from "@tehreer/web";
 import { PageHeader, WhenReady } from "../components/Page";
 import { QuranTextView } from "../components/QuranTextView";
 import { SURAH, SURAH_TITLE } from "../data/surah";

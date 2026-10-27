@@ -1,5 +1,5 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { BidiClass, CodePoint, GeneralCategory, Script, ScriptClassifier } from "tehreer";
+import { BidiClass, CodePoint, GeneralCategory, Script, ScriptClassifier } from "@tehreer/web";
 import { z } from "zod";
 import { guarded, hex } from "../result.js";
 import { characterInput, characterList, enumName } from "../schemas.js";

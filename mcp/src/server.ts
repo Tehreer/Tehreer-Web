@@ -3,9 +3,10 @@
  * MCP server over Tehreer-Web (Tehreer Core compiled to WebAssembly).
  * Talks to the client over stdio, so nothing but protocol messages may be written to stdout.
  */
+import { readFileSync } from "node:fs";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { getVersion, initialize } from "tehreer";
+import { getVersion, initialize } from "@tehreer/web";
 import { registerBidiTools } from "./tools/bidi.js";
 import { registerFontTools } from "./tools/fonts.js";
 import { registerLayoutTools } from "./tools/layout.js";
@@ -15,7 +16,8 @@ import { registerUnicodeTools } from "./tools/unicode.js";
 
 await initialize();
 
-const server = new McpServer({ name: "tehreer", version: "0.1.0" });
+const { version } = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")) as { version: string };
+const server = new McpServer({ name: "tehreer", version });
 registerFontTools(server);
 registerUnicodeTools(server);
 registerShapingTools(server);

@@ -13,7 +13,7 @@
     "noEmit": true,
     "resolveJsonModule": true,
     "baseUrl": ".",
-    "paths": { "tehreer": ["../src/index.ts"], "tehreer/react": ["../src/react/index.ts"] }
+    "paths": { "@tehreer/web": ["../src/index.ts"], "@tehreer/web/react": ["../src/react/index.ts"] }
   },
   "include": ["src", "vite.config.ts"]
 }

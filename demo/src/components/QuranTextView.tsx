@@ -15,7 +15,7 @@
  */
 
 import { forwardRef, useMemo } from "react";
-import { TTextView, type TTextViewHandle, type TTextViewProps } from "tehreer/react";
+import { TTextView, type TTextViewHandle, type TTextViewProps } from "@tehreer/web/react";
 
 /** The code units of one verse. */
 export interface AyahRange {

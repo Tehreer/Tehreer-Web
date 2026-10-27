@@ -15,8 +15,8 @@
  */
 
 import { useMemo } from "react";
-import { TextAlignment } from "tehreer";
-import { TLabel } from "tehreer/react";
+import { TextAlignment } from "@tehreer/web";
+import { TLabel } from "@tehreer/web/react";
 import { WhenReady } from "../components/Page";
 import { StickyHeader } from "../components/Sticky";
 import { useFontFile } from "../lib/fonts";

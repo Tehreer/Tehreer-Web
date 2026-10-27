@@ -1,5 +1,5 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { SfntTag, Typeface, TypefaceManager } from "tehreer";
+import { SfntTag, Typeface, TypefaceManager } from "@tehreer/web";
 import { z } from "zod";
 import {
   addDerivedTypeface,

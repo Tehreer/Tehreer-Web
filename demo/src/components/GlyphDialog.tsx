@@ -15,7 +15,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef } from "react";
-import { DrawStyle, Renderer, type Typeface } from "tehreer";
+import { DrawStyle, Renderer, type Typeface } from "@tehreer/web";
 import { useEngineObject } from "../lib/styledText";
 
 const hex = (value: number) => value.toString(16).toUpperCase().padStart(4, "0");

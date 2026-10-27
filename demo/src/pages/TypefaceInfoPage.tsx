@@ -15,7 +15,7 @@
  */
 
 import { useState, useMemo } from "react";
-import { TLabel } from "tehreer/react";
+import { TLabel } from "@tehreer/web/react";
 import { PageHeader, WhenReady } from "../components/Page";
 import { FontSelect } from "../components/FontSelect";
 import { TEXT_FONTS, useFontFile } from "../lib/fonts";

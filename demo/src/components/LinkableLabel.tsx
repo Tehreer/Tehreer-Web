@@ -15,7 +15,7 @@
  */
 
 import { forwardRef, useMemo, useState } from "react";
-import { TLabel, type TLabelHandle, type TLabelProps } from "tehreer/react";
+import { TLabel, type TLabelHandle, type TLabelProps } from "@tehreer/web/react";
 
 /** A link of the text: the code units it covers and the page it opens. */
 export interface LabelLink {

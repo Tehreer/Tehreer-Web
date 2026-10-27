@@ -10,7 +10,7 @@ import {
   TruncationPlace,
   VerticalAlignment,
   WritingDirection,
-} from "tehreer";
+} from "@tehreer/web";
 import { z } from "zod";
 import { idOfTypeface } from "../registry.js";
 import { guarded } from "../result.js";

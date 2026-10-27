@@ -15,7 +15,7 @@
  */
 
 import { useEffect, useState } from "react";
-import { FontFile, initialize } from "tehreer";
+import { FontFile, initialize } from "@tehreer/web";
 
 export interface FontOption {
   readonly id: string;

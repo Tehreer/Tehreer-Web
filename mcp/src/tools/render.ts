@@ -1,7 +1,7 @@
 import { writeFile } from "node:fs/promises";
 import { isAbsolute } from "node:path";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { DrawStyle, FrameResolver, Renderer, StrokeCap, StrokeJoin } from "tehreer";
+import { DrawStyle, FrameResolver, Renderer, StrokeCap, StrokeJoin } from "@tehreer/web";
 import { z } from "zod";
 import { checkAllowedPath, getTypeface } from "../registry.js";
 import { texts, type ToolResult } from "../result.js";

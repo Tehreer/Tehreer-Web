@@ -26,12 +26,12 @@ export default defineConfig({
   resolve: {
     dedupe: ["react", "react-dom"],
     alias: [
-      { find: "tehreer/react", replacement: widgets },
-      { find: /^tehreer$/, replacement: library },
+      { find: "@tehreer/web/react", replacement: widgets },
+      { find: /^@tehreer\/web$/, replacement: library },
     ],
   },
   server: { fs: { allow: [".."] } },
-  optimizeDeps: { exclude: ["tehreer"] },
+  optimizeDeps: { exclude: ["@tehreer/web"] },
   build: { target: "esnext" },
   esbuild: { target: "esnext" },
 });

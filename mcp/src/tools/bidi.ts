@@ -1,5 +1,5 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { getVersion } from "tehreer";
+import { getVersion } from "@tehreer/web";
 import { z } from "zod";
 import { analyze, type Analysis } from "../bidi.js";
 import { guarded, hex } from "../result.js";

@@ -1,4 +1,4 @@
-import { SfntTag, TypeSlope, TypeWeight, TypeWidth } from "tehreer";
+import { SfntTag, TypeSlope, TypeWeight, TypeWidth } from "@tehreer/web";
 import { z } from "zod";
 
 export const MAX_CHARACTERS = 5_000;

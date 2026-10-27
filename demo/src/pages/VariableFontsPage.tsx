@@ -15,12 +15,12 @@
  */
 
 import { useEffect, useMemo, useState } from "react";
-import { SfntTag, type Typeface } from "tehreer";
+import { SfntTag, type Typeface } from "@tehreer/web";
 import { PageHeader, WhenReady } from "../components/Page";
 import { FontSelect } from "../components/FontSelect";
 import { Select } from "../components/Select";
 import { VARIABLE_FONTS, useFontFile } from "../lib/fonts";
-import { TLabel } from "tehreer/react";
+import { TLabel } from "@tehreer/web/react";
 
 const PREVIEW_LINES = ["ABCDEFGHIJK", "LMNOPQRSTU", "VWXYZ", "0123456789"];
 

@@ -1,10 +1,14 @@
 # Tehreer for the web
 
 Tehreer Core compiled to WebAssembly with Emscripten, and a TypeScript API over all of its public
-headers, shaped like the ones of Tehreer-Android and Tehreer-Cocoa. React widgets (`TLabel`, `TTextView`) are in the `tehreer/react` entry point.
+headers, shaped like the ones of Tehreer-Android and Tehreer-Cocoa. React widgets (`TLabel`, `TTextView`) are in the `@tehreer/web/react` entry point.
+
+```bash
+npm install @tehreer/web
+```
 
 ```ts
-import { initialize, FontFile, Typesetter, FrameResolver, Renderer } from "tehreer";
+import { initialize, FontFile, Typesetter, FrameResolver, Renderer } from "@tehreer/web";
 
 await initialize();
 
@@ -42,6 +46,8 @@ tests/         node:test suites; they use the fixture fonts of Core's Tests/Font
 ```
 
 ## Build and test
+
+The repository is an npm workspace with the MCP server in `mcp/`, so one `npm install` at the root sets up both.
 
 ```bash
 brew install emscripten                  # once
@@ -88,8 +94,8 @@ functions and their declarations, so a change of the public API shows up as a ty
 ## React widgets
 
 ```tsx
-import { TextAlignment } from "tehreer";
-import { TLabel, TTextView } from "tehreer/react";
+import { TextAlignment } from "@tehreer/web";
+import { TLabel, TTextView } from "@tehreer/web/react";
 
 <TLabel text="Hello" typeface={typeface} textSize={24} textColor="#14553A" maxLines={2} isTruncationEnabled />
 
