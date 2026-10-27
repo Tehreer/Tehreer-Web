@@ -144,13 +144,21 @@ function guard(stop: number, body: () => void): void {
   }
 }
 
-/** Runs a call of Core that can call back, and throws what a handler has thrown meanwhile. */
-export function callingBack<T>(call: () => T): T {
+/**
+ * Runs a call of Core that can call back, and throws what a handler has thrown meanwhile.
+ *
+ * @param discard Releases what the call returned, for a call that makes an object that the caller
+ *     owns: it is given the result when a handler threw, because nothing will wrap it then.
+ */
+export function callingBack<T>(call: () => T, discard?: (result: T) => void): T {
   const result = call();
   if (failed) {
     const error = failure;
     failed = false;
     failure = undefined;
+    if (discard !== undefined && (result as unknown) !== 0) {
+      discard(result);
+    }
     throw error;
   }
   return result;

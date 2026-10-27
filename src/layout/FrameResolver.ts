@@ -192,8 +192,9 @@ export class FrameResolver extends NativeObject {
       throw new Error("The typesetter is not set.");
     }
     checkOrderedRange(fromIndex, toIndex);
-    const frame = callingBack(() =>
-      Module._TRFrameResolverCreateFrame(handle, fromIndex, toIndex - fromIndex),
+    const frame = callingBack(
+      () => Module._TRFrameResolverCreateFrame(handle, fromIndex, toIndex - fromIndex),
+      (created) => Module._TRComposedFrameRelease(created),
     );
     if (frame === 0) {
       throw new RangeError("The range is empty or is not within the text.");

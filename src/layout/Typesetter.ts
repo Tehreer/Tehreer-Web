@@ -28,6 +28,8 @@ import { attributeNames, writeAttribute } from "./TextAttributeCodec.js";
 import type { TextAttributes } from "./TextAttributes.js";
 import { TText } from "./TText.js";
 
+const releaseLine = (line: number): void => Module._TRComposedLineRelease(line);
+
 /**
  * Shapes text and breaks it into lines. It copies the text, so the text can be changed or
  * disposed after the typesetter is made. A typesetter is immutable and thread safe.
@@ -70,7 +72,10 @@ export class Typesetter extends NativeObject {
         temporaries.push(writeAttribute(memory + index * TRAttribute.size, name, defaults[name]));
       });
       return checkCreated(
-        callingBack(() => Module._TRTypesetterCreate(source.nativeHandle, memory, names.length)),
+        callingBack(
+          () => Module._TRTypesetterCreate(source.nativeHandle, memory, names.length),
+          (created) => Module._TRTypesetterRelease(created),
+        ),
         "a typesetter (does all of the text have a typeface?)",
       );
     } finally {
@@ -124,8 +129,9 @@ export class Typesetter extends NativeObject {
   createSimpleLine(fromIndex: number, toIndex: number, layoutWidth = 0): ComposedLine {
     const handle = this.nativeHandle;
     checkOrderedRange(fromIndex, toIndex);
-    const line = callingBack(() =>
-      Module._TRTypesetterCreateSimpleLine(handle, fromIndex, toIndex - fromIndex, layoutWidth),
+    const line = callingBack(
+      () => Module._TRTypesetterCreateSimpleLine(handle, fromIndex, toIndex - fromIndex, layoutWidth),
+      releaseLine,
     );
     return ComposedLine.adopting(checkLine(line, "a line"));
   }
@@ -141,9 +147,11 @@ export class Typesetter extends NativeObject {
     const handle = this.nativeHandle;
     checkOrderedRange(fromIndex, toIndex);
     const line = withUtf16(token, (units, length) =>
-      callingBack(() =>
-        Module._TRTypesetterCreateTruncationToken(
-          handle, fromIndex, toIndex - fromIndex, place, units, length, StringEncodingUTF16),
+      callingBack(
+        () =>
+          Module._TRTypesetterCreateTruncationToken(
+            handle, fromIndex, toIndex - fromIndex, place, units, length, StringEncodingUTF16),
+        releaseLine,
       ),
     );
     return ComposedLine.adopting(checkLine(line, "a truncation token"));
@@ -166,9 +174,11 @@ export class Typesetter extends NativeObject {
   ): ComposedLine {
     const handle = this.nativeHandle;
     this.#checkNonEmptyRange(fromIndex, toIndex);
-    const line = callingBack(() =>
-      Module._TRTypesetterCreateTruncatedLine(
-        handle, fromIndex, toIndex - fromIndex, extent, breakMode, place, tokenLine.nativeHandle),
+    const line = callingBack(
+      () =>
+        Module._TRTypesetterCreateTruncatedLine(
+          handle, fromIndex, toIndex - fromIndex, extent, breakMode, place, tokenLine.nativeHandle),
+      releaseLine,
     );
     return ComposedLine.adopting(checkLine(line, "a truncated line"));
   }
@@ -190,9 +200,11 @@ export class Typesetter extends NativeObject {
   ): ComposedLine {
     const handle = this.nativeHandle;
     this.#checkNonEmptyRange(fromIndex, toIndex);
-    const line = callingBack(() =>
-      Module._TRTypesetterCreateJustifiedLine(
-        handle, fromIndex, toIndex - fromIndex, justificationFactor, justificationExtent),
+    const line = callingBack(
+      () =>
+        Module._TRTypesetterCreateJustifiedLine(
+          handle, fromIndex, toIndex - fromIndex, justificationFactor, justificationExtent),
+      releaseLine,
     );
     return ComposedLine.adopting(checkLine(line, "a justified line"));
   }

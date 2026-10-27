@@ -330,3 +330,66 @@ test("toSvg fails once the frame is disposed", () => {
   frame.dispose();
   assert.throws(() => frame.toSvg(renderer, 0, 0), /disposed/);
 });
+
+/** A text with a block replacement whose room fails once a width is given, as a frame or a line asks. */
+function failingBlockText() {
+  const replacement = new Replacement(
+    { computeRoom: (layoutWidth) => {
+      if (layoutWidth > 0) {
+        throw new Error("no room for a block");
+      }
+      return { ascent: 5, descent: 1, extent: 10 };
+    } },
+    ReplacementKind.Block,
+  );
+  const text = new TMutableText("ab￼cd");
+  text.setAttributes(2, 3, { replacement });
+  const typeface = loadFont(ROBOTO).typefaces.get(0);
+  const typesetter = new Typesetter(text, { typeface, typeSize: 20 });
+  return { replacement, text, typesetter };
+}
+
+test("a frame that a delegate fails to lay out does not leak, and neither does what it held", () => {
+  const before = replacements.size;
+  for (let i = 0; i < 20; i++) {
+    const { replacement, text, typesetter } = failingBlockText();
+    const resolver = new FrameResolver();
+    resolver.typesetter = typesetter;
+    resolver.frameWidth = 100;
+    resolver.frameHeight = 100;
+    assert.throws(() => resolver.createFrame(0, 5), /no room for a block/);
+    resolver.dispose();
+    typesetter.dispose();
+    text.dispose();
+    replacement.dispose();
+  }
+  assert.equal(replacements.size, before, "the replacements are gone, so no frame kept them");
+});
+
+test("a line that a delegate fails to lay out does not leak", () => {
+  const before = replacements.size;
+  for (let i = 0; i < 20; i++) {
+    const { replacement, text, typesetter } = failingBlockText();
+    assert.throws(() => typesetter.createSimpleLine(0, 5, 100), /no room for a block/);
+    typesetter.dispose();
+    text.dispose();
+    replacement.dispose();
+  }
+  assert.equal(replacements.size, before);
+});
+
+test("a typesetter that a delegate fails to make does not leak, and later calls are not poisoned", () => {
+  const before = replacements.size;
+  for (let i = 0; i < 20; i++) {
+    const text = new TMutableText("ab￼cd");
+    const replacement = new Replacement({ computeRoom: () => { throw new Error("no room"); } });
+    text.setAttributes(2, 3, { replacement });
+    const typeface = loadFont(ROBOTO).typefaces.get(0);
+    assert.throws(() => new Typesetter(text, { typeface, typeSize: 20 }), /no room/);
+    text.dispose();
+    replacement.dispose();
+  }
+  assert.equal(replacements.size, before);
+  const { frame } = setup("abc");
+  assert.equal(frame.lines.length, 1);
+});
