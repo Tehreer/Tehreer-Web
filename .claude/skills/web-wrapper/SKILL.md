@@ -5,7 +5,7 @@ description: Rules, conventions and workflow for wrapping Tehreer Core in Tehree
 
 # Wrap Tehreer Core in Tehreer-Web
 
-The web repo is `/Users/mta/Learning/Tehreer-Web` (npm package `tehreer`, ES modules, TypeScript 5.9, strict). It compiles Core with Emscripten into one WebAssembly module and exposes every public header as a TypeScript API shaped like Tehreer-Android and Tehreer-Cocoa. It has no React in it yet: widgets (`TLabel`, `TTextView`) and a React package are meant to be built on top. Core is **not** a submodule: the build reads `../Tehreer-Core` (override with `TEHREER_CORE`), and its dependency sources from `../Tehreer-Core/build/_deps` (override with `TR_DEPS_SRC`). Emscripten comes from `brew install emscripten` (`emcc`, `emcmake`).
+The web repo is Tehreer-Web (npm package `tehreer`, ES modules, TypeScript 5.9, strict). It compiles Core with Emscripten into one WebAssembly module and exposes every public header as a TypeScript API shaped like Tehreer-Android and Tehreer-Cocoa. It has no React in it yet: widgets (`TLabel`, `TTextView`) and a React package are meant to be built on top. Core is **not** a submodule: the build reads `../Tehreer-Core` (override with `TEHREER_CORE`), and its dependency sources from `../Tehreer-Core/build/_deps` (override with `TR_DEPS_SRC`). Emscripten comes from `brew install emscripten` (`emcc`, `emcmake`).
 
 ## 1. Principles
 

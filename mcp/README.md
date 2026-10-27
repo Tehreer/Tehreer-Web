@@ -30,5 +30,5 @@ npm run smoke                              # calls a few tools once
 Claude Desktop / Claude Code config:
 
 ```json
-{ "mcpServers": { "tehreer": { "command": "node", "args": ["/Users/mta/Learning/Tehreer-Web/mcp/build/server.js"] } } }
+{ "mcpServers": { "tehreer": { "command": "node", "args": ["<path to Tehreer-Web>/mcp/build/server.js"] } } }
 ```
