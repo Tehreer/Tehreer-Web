@@ -18,6 +18,7 @@ import { coreBufferOf, pointReader } from "../collections/CoreList.js";
 import { List } from "../collections/List.js";
 import type { Color } from "../Color.js";
 import { CanvasPainter } from "../drawing/CanvasPainter.js";
+import { SvgPainter } from "../drawing/SvgPainter.js";
 import type { DrawingContext } from "../drawing/DrawingContext.js";
 import type { Point, Rect } from "../geometry.js";
 import { adopt } from "../internal/Adopt.js";
@@ -347,13 +348,26 @@ export class Renderer extends NativeObject {
         const handle = this.nativeHandle;
     const pointers = callbackPointers();
     const key = drawTargets.add(target);
-    Module._TRRendererSetDrawCallbacks(handle, pointers.drawCallbacks, key);
+    Module._TRRendererSetDrawCallbacks(
+      handle, target.drawGlyphImage ? pointers.drawCallbacks : pointers.pathDrawCallbacks, key);
     try {
       callingBack(() => draw(handle));
     } finally {
       Module._TRRendererSetDrawCallbacks(handle, pointers.emptyDrawCallbacks, 0);
       drawTargets.remove(key);
     }
+  }
+
+  /**
+   * Runs a call of Core that draws, and returns what it drew as SVG elements: the glyphs as
+   * outlines, backgrounds and decorations as rectangles, shadows as filters.
+   *
+   * @internal
+   */
+  drawSvg(draw: (renderer: number) => void): string {
+    const painter = new SvgPainter(this.renderScale, this.strokeRadius, this.strokeCap, this.strokeJoin, this.strokeMiter);
+    this.drawWith(painter, draw);
+    return painter.toString();
   }
 
   /**

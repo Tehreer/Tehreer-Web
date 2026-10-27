@@ -244,6 +244,19 @@ export class GlyphRun extends NativeObject {
     );
   }
 
+  /**
+   * Draws the run as SVG, where {@link draw} draws it into a context, with the same origin: the
+   * glyphs are filled or stroked outlines, backgrounds and decorations are rectangles, and shadows
+   * are filters. It returns a `<g>` element for an SVG in pixels, with the y axis pointing down.
+   * Replacements are not drawn, and glyphs that have only images (bitmap fonts) are left out.
+   */
+  toSvg(renderer: Renderer, x: number, y: number): string {
+    const handle = this.nativeHandle;
+    return renderer.drawSvg((rendererHandle) =>
+      TRPoint.passing({ x, y }, (origin) => Module._TRGlyphRunDraw(handle, rendererHandle, origin)),
+    );
+  }
+
   #color(getter: (run: number, color: number) => number): Color | undefined {
     const handle = this.nativeHandle;
     return withStack((stack) => {

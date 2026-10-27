@@ -118,4 +118,17 @@ export class ComposedFrame extends NativeObject {
       TRPoint.passing({ x, y }, (origin) => Module._TRComposedFrameDraw(handle, rendererHandle, origin)),
     );
   }
+
+  /**
+   * Draws the frame as SVG, where {@link draw} draws it into a context, with the same origin: the
+   * glyphs are filled or stroked outlines, backgrounds and decorations are rectangles, and shadows
+   * are filters. It returns a `<g>` element for an SVG in pixels, with the y axis pointing down.
+   * Replacements are not drawn, and glyphs that have only images (bitmap fonts) are left out.
+   */
+  toSvg(renderer: Renderer, x: number, y: number): string {
+    const handle = this.nativeHandle;
+    return renderer.drawSvg((rendererHandle) =>
+      TRPoint.passing({ x, y }, (origin) => Module._TRComposedFrameDraw(handle, rendererHandle, origin)),
+    );
+  }
 }

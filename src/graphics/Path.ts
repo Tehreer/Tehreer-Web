@@ -175,6 +175,19 @@ export class Path implements PathSink {
    * @internal
    */
   static takeNative(handle: number, transform?: AffineTransform): Path {
+    try {
+      return Path.copyNative(handle, transform);
+    } finally {
+      Module._TRPathRelease(handle);
+    }
+  }
+
+  /**
+   * Copies an outline of Core to a path, and leaves the reference as it is.
+   *
+   * @internal
+   */
+  static copyNative(handle: number, transform?: AffineTransform): Path {
     const path = new Path();
         const key = pathSinks.add(path);
     try {
@@ -189,7 +202,6 @@ export class Path implements PathSink {
       }
     } finally {
       pathSinks.remove(key);
-      Module._TRPathRelease(handle);
     }
     return path;
   }

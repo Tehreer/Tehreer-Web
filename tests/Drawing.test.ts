@@ -274,3 +274,59 @@ test("the state of a replacement goes when Core is done with it", () => {
   text.dispose();
   assert.equal(replacements.size, before);
 });
+
+test("toSvg draws the glyphs of a frame as outlines", () => {
+  const { frame, renderer } = setup("abcabc");
+  const svg = frame.toSvg(renderer, 10, 20);
+  assert.match(svg, /^<g>.*<\/g>$/s);
+  const paths = svg.match(/<path d="M[^"]+" transform="translate\(([\d.-]+) ([\d.-]+)\)" fill="#000000"\/>/g) ?? [];
+  assert.equal(paths.length, 6);
+  const xs = paths.map((path) => Number(/translate\(([\d.-]+)/.exec(path)![1]));
+  assert.deepEqual([...xs].sort((a, b) => a - b), xs, "the glyphs go from left to right");
+  assert.ok(xs[0]! >= 10 - 2);
+});
+
+test("toSvg strokes outlines with the stroke settings", () => {
+  const { frame, renderer } = setup("ab");
+  renderer.drawStyle = DrawStyle.FillStroke;
+  renderer.strokeRadius = 1.5;
+  renderer.strokeColor = 0x80ff0000;
+  const svg = frame.toSvg(renderer, 0, 0);
+  assert.equal((svg.match(/fill="#000000"/g) ?? []).length, 2);
+  assert.equal((svg.match(/fill="none" stroke="#ff0000" stroke-opacity="0.502" stroke-width="3"/g) ?? []).length, 2);
+
+  renderer.drawStyle = DrawStyle.Stroke;
+  assert.equal((frame.toSvg(renderer, 0, 0).match(/<path/g) ?? []).length, 2);
+});
+
+test("toSvg draws backgrounds, decorations and shadows", () => {
+  const text = new TMutableText("abcdef");
+  text.setAttributes(1, 3, { backgroundColor: 0xff00ff00 });
+  text.setAttributes(3, 5, { underline: true, foregroundColor: 0xff0000ff });
+  const { frame, renderer } = setup(text);
+  renderer.shadowRadius = 4;
+  renderer.shadowDx = 2;
+  renderer.shadowDy = 3;
+  renderer.shadowColor = 0x800000ff;
+  const svg = frame.toSvg(renderer, 0, 0);
+  assert.match(svg, /<rect [^>]*fill="#00ff00"\/>/);
+  assert.match(svg, /<rect [^>]*fill="#0000ff"\/>/, "the underline takes the foreground color");
+  assert.match(svg, /<filter id="tehreer-shadow-\d+"[^>]*><feDropShadow dx="2" dy="3" stdDeviation="2" flood-color="#0000ff" flood-opacity="0.502"\/>/);
+  assert.equal((svg.match(/<g filter=/g) ?? []).length, (svg.match(/<\/g>/g) ?? []).length - 1);
+});
+
+test("toSvg works for lines and runs, and leaves the renderer drawing images afterward", () => {
+  const { frame, renderer } = setup("abc");
+  const line = frame.lines.get(0);
+  assert.equal((line.toSvg(renderer, 0, 0).match(/<path/g) ?? []).length, 3);
+  assert.equal((line.runs.get(0).toSvg(renderer, 0, 0).match(/<path/g) ?? []).length, 3);
+  const context = new RecordingContext();
+  frame.draw(renderer, context.asContext, 0, 0);
+  assert.equal(context.count("drawImage"), 3);
+});
+
+test("toSvg fails once the frame is disposed", () => {
+  const { frame, renderer } = setup("abc");
+  frame.dispose();
+  assert.throws(() => frame.toSvg(renderer, 0, 0), /disposed/);
+});

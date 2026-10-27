@@ -55,8 +55,11 @@ export class HandlerTable<T> {
 
 /** The functions that draw a glyph run, a line or a frame call, which a renderer is given. */
 export interface DrawTarget {
-  /** Draws the image of a glyph. The image is valid until the function returns. */
-  drawGlyphImage(
+  /**
+   * Draws the image of a glyph. The image is valid until the function returns. A target that
+   * leaves it out gets the glyphs as outlines, through `drawGlyphPath`.
+   */
+  drawGlyphImage?(
     image: number,
     x: number,
     y: number,
@@ -65,6 +68,12 @@ export interface DrawTarget {
     color: Color,
     clip: Rect | undefined,
   ): void;
+  /**
+   * Draws the outline of a glyph, which is valid until the function returns. It is in pixels with
+   * the pen position of the glyph at its origin, which is `(x, y)`. `style` is `DrawStyle.Fill` or
+   * `DrawStyle.Stroke`. Called only if the target has no `drawGlyphImage`.
+   */
+  drawGlyphPath?(path: number, x: number, y: number, style: number, color: Color, clip: Rect | undefined): void;
   fillRect(rect: Rect, color: Color): void;
   /** Draws the replacement of a run, at the start of the run on its baseline. */
   drawReplacement(run: number, x: number, y: number): void;
@@ -94,6 +103,8 @@ export const imageData = new HandlerTable<unknown>();
 export interface CallbackPointers {
   readonly pathCallbacks: number;
   readonly drawCallbacks: number;
+  /** The same functions with `drawGlyphPath` in place of `drawGlyphImage`. */
+  readonly pathDrawCallbacks: number;
   readonly emptyDrawCallbacks: number;
   readonly replacementCallbacks: number;
   readonly selectionFunc: number;
@@ -181,15 +192,9 @@ export function installCallbacks(): void {
       guard(stop, () => pathSinks.get(userData)?.close()), "vii"),
   });
 
-  // drawGlyphPath is not set, so glyphs are drawn as images.
-  const drawCallbacks = calloc(TRDrawCallbacks.size);
-  TRDrawCallbacks.assign(drawCallbacks, {
-    drawGlyphImage: add((userData: number, image: number, origin: number, scaleX: number, scaleY: number, color: number, clip: number) =>
-      guard(0, () => {
-        const position = TRPoint.view(origin);
-        drawTargets.get(userData)?.drawGlyphImage(
-          image, position.x, position.y, scaleX, scaleY, color >>> 0, clip === 0 ? undefined : TRRect.snapshot(clip));
-      }), "viiiffii"),
+  // Core passes glyphs as images if drawGlyphImage is set, and as outlines otherwise, so there are
+  // two structs: a target gets the one that suits it.
+  const sharedDrawCallbacks = {
     fillRect: add((userData: number, rect: number, color: number) =>
       guard(0, () => drawTargets.get(userData)?.fillRect(TRRect.snapshot(rect), color >>> 0)), "viii"),
     drawReplacement: add((userData: number, run: number, origin: number) =>
@@ -200,6 +205,28 @@ export function installCallbacks(): void {
     beginShadow: add((userData: number, radius: number, dx: number, dy: number, color: number) =>
       guard(0, () => drawTargets.get(userData)?.beginShadow(radius, dx, dy, color >>> 0)), "vifffi"),
     endShadow: add((userData: number) => guard(0, () => drawTargets.get(userData)?.endShadow()), "vi"),
+  };
+
+  const drawCallbacks = calloc(TRDrawCallbacks.size);
+  TRDrawCallbacks.assign(drawCallbacks, {
+    ...sharedDrawCallbacks,
+    drawGlyphImage: add((userData: number, image: number, origin: number, scaleX: number, scaleY: number, color: number, clip: number) =>
+      guard(0, () => {
+        const position = TRPoint.view(origin);
+        drawTargets.get(userData)?.drawGlyphImage?.(
+          image, position.x, position.y, scaleX, scaleY, color >>> 0, clip === 0 ? undefined : TRRect.snapshot(clip));
+      }), "viiiffii"),
+  });
+
+  const pathDrawCallbacks = calloc(TRDrawCallbacks.size);
+  TRDrawCallbacks.assign(pathDrawCallbacks, {
+    ...sharedDrawCallbacks,
+    drawGlyphPath: add((userData: number, path: number, origin: number, style: number, color: number, clip: number) =>
+      guard(0, () => {
+        const position = TRPoint.view(origin);
+        drawTargets.get(userData)?.drawGlyphPath?.(
+          path, position.x, position.y, style, color >>> 0, clip === 0 ? undefined : TRRect.snapshot(clip));
+      }), "viiiiii"),
   });
 
   const replacementCallbacks = calloc(TRReplacementCallbacks.size);
@@ -221,6 +248,7 @@ export function installCallbacks(): void {
   pointers = {
     pathCallbacks,
     drawCallbacks,
+    pathDrawCallbacks,
     emptyDrawCallbacks: calloc(TRDrawCallbacks.size),
     replacementCallbacks,
     selectionFunc: add((userData: number, rect: number, stop: number) =>
