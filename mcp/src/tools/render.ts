@@ -3,7 +3,7 @@ import { isAbsolute } from "node:path";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { DrawStyle, FrameResolver, Renderer, StrokeCap, StrokeJoin } from "tehreer";
 import { z } from "zod";
-import { getTypeface } from "../registry.js";
+import { checkAllowedPath, getTypeface } from "../registry.js";
 import { texts, type ToolResult } from "../result.js";
 import { characterList, colorString, parseColor, typefaceId } from "../schemas.js";
 import { buildTypesetter, Scope, textSpecShape, type TextSpec } from "../textSpec.js";
@@ -50,6 +50,7 @@ async function deliver(svg: string, metadata: Record<string, unknown>, outputPat
     if (!isAbsolute(outputPath) || !outputPath.endsWith(".svg")) {
       throw new Error("outputPath must be an absolute path that ends in .svg.");
     }
+    checkAllowedPath(outputPath, "TEHREER_MCP_OUTPUT_DIRS");
     await writeFile(outputPath, svg, "utf8");
     metadata.outputPath = outputPath;
   }

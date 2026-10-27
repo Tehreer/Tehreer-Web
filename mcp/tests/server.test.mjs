@@ -342,3 +342,90 @@ test("render_glyph", async () => {
   assert.match((await callRaw("render_glyph", { typefaceId: roboto })).error, /exactly one/);
   assert.match((await callRaw("render_glyph", { typefaceId: roboto, char: "ab" })).error, /exactly one character/);
 });
+
+// Regressions found by the QA pass.
+
+test("font_load survives messages over the old 10 MiB transport limit and refuses fonts over the limit", async () => {
+  const big = Buffer.alloc(8 * 1024 * 1024, 7).toString("base64");
+  assert.ok(big.length > 10 * 1024 * 1024);
+  assert.ok((await call("font_load", { base64: big })).error, "an invalid font is an error, not a dead server");
+  const huge = Buffer.alloc(70 * 1024 * 1024, 7).toString("base64");
+  assert.match((await call("font_load", { base64: huge })).error, /too long|limit|64/i);
+  assert.ok(Array.isArray((await call("font_list")).fonts), "the server still answers");
+});
+
+test("font_load refuses sources that are not bounded font files", async () => {
+  assert.match((await call("font_load", { path: "/dev/zero" })).error, /Not a regular file/);
+  assert.match((await call("font_load", { path: "/tmp" })).error, /Not a regular file|EISDIR/);
+  assert.match((await call("font_load", { url: "http://127.0.0.1:9/font.ttf" })).error, /refused/);
+  assert.match((await call("font_load", { url: "http://localhost/font.ttf" })).error, /refused/);
+  assert.match((await call("font_load", { url: "http://10.1.2.3/font.ttf" })).error, /refused/);
+  assert.match((await call("font_load", { url: "http://[::1]/font.ttf" })).error, /refused/);
+  assert.match((await call("font_load", { url: "file:///etc/hosts" })).error, /http and https/);
+});
+
+test("font_load limits the size and the time of a download", async () => {
+  const { createServer } = await import("node:http");
+  const http = createServer((request, response) => {
+    if (request.url === "/hang") {
+      return; // never answers
+    }
+    response.writeHead(200, { "content-type": "font/ttf" });
+    const chunk = Buffer.alloc(1024 * 1024);
+    const timer = setInterval(() => response.write(chunk), 0); // endless
+    response.on("close", () => clearInterval(timer));
+  });
+  await new Promise((resolve) => http.listen(0, "127.0.0.1", resolve));
+  const port = http.address().port;
+  const local = new Client({ name: "local", version: "0.0.0" });
+  await local.connect(
+    new StdioClientTransport({
+      command: process.execPath,
+      args: [server],
+      stderr: "ignore",
+      env: { ...process.env, TEHREER_MCP_ALLOW_LOCAL_URLS: "1", TEHREER_MCP_FETCH_TIMEOUT_MS: "1500" },
+    }),
+  );
+  try {
+    const run = async (path) => {
+      const result = await local.callTool({ name: "font_load", arguments: { url: `http://127.0.0.1:${port}${path}` } });
+      return result.isError ? result.content[0].text : "ok";
+    };
+    assert.match(await run("/endless"), /larger than the limit/);
+    const started = Date.now();
+    assert.match(await run("/hang"), /abort|timeout|timed out/i);
+    assert.ok(Date.now() - started < 10_000);
+  } finally {
+    await local.close();
+    http.closeAllConnections();
+    http.close();
+  }
+});
+
+test("font_instance reuses equal instances and font_release frees them", async () => {
+  const loaded = await call("font_load", { path: font("Roboto-Variable.abc.ttf") });
+  const id = loaded.faces[0].typefaceId;
+  const count = async () => (await call("font_list")).fonts.find((f) => f.fontId === loaded.fontId).faces.length;
+  const base = await count();
+  const first = await call("font_instance", { typefaceId: id, axes: { wght: 700 } });
+  const again = await call("font_instance", { typefaceId: id, axes: { wght: 700 } });
+  assert.equal(again.typefaceId, first.typefaceId);
+  assert.equal(again.reused, true);
+  const other = await call("font_instance", { typefaceId: id, axes: { wght: 300 } });
+  assert.notEqual(other.typefaceId, first.typefaceId);
+
+  assert.equal(await count(), base + 2);
+  assert.deepEqual((await call("font_release", { typefaceId: first.typefaceId })).released, [first.typefaceId]);
+  assert.equal(await count(), base + 1);
+  assert.match((await call("font_inspect", { typefaceId: first.typefaceId })).error, /Unknown typefaceId/);
+  assert.match((await call("font_release", { typefaceId: id })).error, /font_unload/);
+  assert.match((await call("font_release", { typefaceId: "t999" })).error, /Unknown/);
+
+  // A long session can keep making instances as long as it releases them.
+  for (let i = 0; i < 1200; i++) {
+    const made = await call("font_instance", { typefaceId: id, axes: { wght: 100 + (i % 800) } });
+    assert.ok(made.typefaceId, `instance ${i}: ${made.error}`);
+    await call("font_release", { typefaceId: made.typefaceId });
+  }
+  await call("font_unload", { fontId: loaded.fontId });
+});

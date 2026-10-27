@@ -4,6 +4,9 @@ import { z } from "zod";
 import {
   addDerivedTypeface,
   derivedFromOf,
+  findInstance,
+  MAX_FONT_BYTES,
+  releaseInstance,
   fontIdOf,
   getFont,
   getTypeface,
@@ -139,11 +142,16 @@ export function registerFontTools(server: McpServer): void {
       description:
         "Loads a font file (TTF/OTF/TTC/OTC) from a local path, an http(s) URL or base64 data, and returns a " +
         "fontId plus one typefaceId per face. Typeface ids are what every other tool takes. Fonts stay loaded " +
-        "until font_unload. Local paths may be restricted by the TEHREER_MCP_FONT_DIRS environment variable.",
+        "until font_unload. Fonts are limited to 64 MB; prefer path or url over base64 for large ones. Local paths may be "
+        + "restricted by TEHREER_MCP_FONT_DIRS, and URLs on private networks are refused.",
       inputSchema: {
         path: z.string().optional().describe("Absolute path of a font file on the machine running the server."),
         url: z.string().url().optional().describe("http(s) URL of a font file."),
-        base64: z.string().optional().describe("Base64 encoded font file."),
+        base64: z
+          .string()
+          .max(Math.ceil((MAX_FONT_BYTES * 4) / 3) + 4)
+          .optional()
+          .describe("Base64 encoded font file (at most 64 MB decoded)."),
         name: z.string().optional().describe("Label for the font; defaults to the file name."),
       },
     },
@@ -226,7 +234,7 @@ export function registerFontTools(server: McpServer): void {
       description:
         "Makes a new typeface from a variable and/or color font. For variation give axis values by tag (axes you " +
         "leave out stay at their default) or a named style; for color give a predefined palette index or explicit " +
-        "colors for the palette entries. Values are clamped to their axes. Returns a new typefaceId.",
+        "colors for the palette entries. Values are clamped to their axes. Returns a new typefaceId (the same one if the request was made before).",
       inputSchema: {
         typefaceId,
         axes: z.record(z.string(), z.number()).optional().describe("Axis values by tag, e.g. {\"wght\": 700, \"wdth\": 80}."),
@@ -314,9 +322,28 @@ export function registerFontTools(server: McpServer): void {
         for (const typeface of made.slice(0, -1)) {
           typeface.dispose();
         }
-        const newId = addDerivedTypeface(id, current);
+        // The same request gives the same typeface, so repeating it does not use up the registry.
+        const key = JSON.stringify([current.variationCoordinates.toArray(), current.associatedColors.toArray()]);
+        const existing = findInstance(id, key);
+        if (existing !== undefined) {
+          current.dispose();
+          return { ...faceSummary(existing, getTypeface(existing)), reused: true };
+        }
+        const newId = addDerivedTypeface(id, current, key);
         return faceSummary(newId, current);
       }),
+  );
+
+  server.registerTool(
+    "font_release",
+    {
+      title: "Release an instance",
+      description:
+        "Frees a typeface made by font_instance (and instances made from it) without unloading its font. " +
+        "Use it to keep a long session under the typeface limit. Faces of a font file are freed by font_unload.",
+      inputSchema: { typefaceId },
+    },
+    ({ typefaceId: id }) => guarded(() => ({ released: releaseInstance(id) })),
   );
 
   server.registerTool(

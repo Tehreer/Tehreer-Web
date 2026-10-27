@@ -23,5 +23,10 @@ registerLayoutTools(server);
 registerRenderTools(server);
 registerBidiTools(server);
 
-await server.connect(new StdioServerTransport());
+// The default limit of a message is 10 MiB, and a message over it closes the transport without a
+// reply. A font of the largest size, as base64, has to fit with room for the rest of the request.
+const MAX_MESSAGE_BYTES = 100 * 1024 * 1024;
+const transport = new StdioServerTransport(process.stdin, process.stdout, { maxBufferSize: MAX_MESSAGE_BYTES });
+transport.onerror = (error) => console.error(`tehreer MCP transport error: ${error.message}`);
+await server.connect(transport);
 console.error(`tehreer MCP server ready (Tehreer Core ${getVersion()})`);
