@@ -1,0 +1,23 @@
+{
+  "name": "tehreer-mcp",
+  "version": "0.1.0",
+  "private": true,
+  "description": "MCP server that exposes Tehreer-Web (fonts, Unicode, bidi) to LLM clients.",
+  "type": "module",
+  "bin": { "tehreer-mcp": "./build/server.js" },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node build/server.js",
+    "smoke": "node scripts/smoke.mjs",
+    "test": "node --test tests/"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "tehreer": "file:..",
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.9.0"
+  }
+}
