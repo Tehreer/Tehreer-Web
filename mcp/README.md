@@ -1,6 +1,6 @@
-# tehreer-mcp
+# @tehreer/mcp
 
-MCP server (stdio) over Tehreer-Web: fonts, Unicode properties, shaping, layout, SVG rendering and the Unicode Bidirectional Algorithm.
+MCP server (stdio) over [`@tehreer/web`](https://github.com/Tehreer/Tehreer-Web): fonts, Unicode properties, shaping, layout, SVG rendering and the Unicode Bidirectional Algorithm.
 
 Tools
 
@@ -20,14 +20,35 @@ Limits and environment variables:
 - `url` sources must be http or https and may not point to this machine or a private network unless `TEHREER_MCP_ALLOW_LOCAL_URLS=1`; downloads time out after 30 s (`TEHREER_MCP_FETCH_TIMEOUT_MS`).
 - At most 64 fonts and 1024 typefaces are held; release instances you no longer need.
 
+## Install and use
+
+No build is needed when it is installed from npm (Node 22 or newer):
+
 ```sh
-(cd .. && npm install && npm run build)   # builds the tehreer package (dist/ + wasm)
-npm install && npm run build
+claude mcp add tehreer -- npx -y @tehreer/mcp          # Claude Code
+```
+
+Claude Desktop (`claude_desktop_config.json`):
+
+```json
+{ "mcpServers": { "tehreer": { "command": "npx", "args": ["-y", "@tehreer/mcp"] } } }
+```
+
+## Develop
+
+The repository is an npm workspace, so the server runs against the local `@tehreer/web`:
+
+```sh
+git clone https://github.com/Tehreer/Tehreer-Web.git && cd Tehreer-Web
+npm install
+npm run build:wasm                         # needs Emscripten; fetches Core
+npm run build
+cd mcp && npm run build
 npm test                                   # needs Tehreer-Core next to this repo (or TEHREER_CORE) for its test fonts
 npm run smoke                              # calls a few tools once
 ```
 
-Claude Desktop / Claude Code config:
+To use a local build, point the client at it:
 
 ```json
 { "mcpServers": { "tehreer": { "command": "node", "args": ["<path to Tehreer-Web>/mcp/build/server.js"] } } }

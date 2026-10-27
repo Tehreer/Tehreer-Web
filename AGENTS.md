@@ -1,6 +1,6 @@
 # AGENTS.md
 
-`tehreer` (npm, ES modules, strict TypeScript 5.9): Tehreer Core (`../Tehreer-Core`, C) compiled to one WebAssembly module with Emscripten, plus a TypeScript API shaped like Tehreer-Android and Tehreer-Cocoa. React widgets (`TLabel`, `TTextView`) live in `src/react` and ship as `tehreer/react`.
+`@tehreer/web` (npm, ES modules, strict TypeScript 5.9): Tehreer Core (`../Tehreer-Core`, C) compiled to one WebAssembly module with Emscripten, plus a TypeScript API shaped like Tehreer-Android and Tehreer-Cocoa. React widgets (`TLabel`, `TTextView`) live in `src/react` and ship as `@tehreer/web/react`.
 
 For wrapper conventions, memory/struct rules, mapping tables and the Core-update workflow, read `.claude/skills/web-wrapper/SKILL.md` before changing anything under `src/` or `native/`.
 
@@ -11,7 +11,7 @@ For wrapper conventions, memory/struct rules, mapping tables and the Core-update
 - `native/` CMake + `Module.c` (`tw_version`, `tw_layout`); `exports.json` is generated.
 - `scripts/` build-wasm, generate-bindings, generate-unicode-enums, copy-wasm.
 - `tests/` `node:test` suites using Core's fonts via `tests/Support.ts`.
-- `demo/` Vite React app (own `package.json`, deployed to Vercel by a manual workflow). `mcp/` stdio MCP server over the bidi API (own `package.json`, uses `tehreer` via `file:..`).
+- `demo/` Vite React app (own `package.json`, deployed to Vercel by a manual workflow). `mcp/` stdio MCP server over fonts, Unicode, shaping, layout and SVG rendering (`@tehreer/mcp`, an npm workspace that resolves `@tehreer/web` to the repository through `overrides`).
 
 ## Commands
 
