@@ -41,8 +41,8 @@ const SHEENBIDI_HEADERS = [
 ];
 
 // Declared by Core but not implemented, or needing headers of another library.
-const EXCLUDED = new Set(["TRVersionGetString", "TRTextGetSheenBidiText"]);
-const STRUCTS = new Set(["TRPoint", "TRSize", "TRRect", "TRAffineTransform"]);
+const EXCLUDED = new Set(["TRVersionGetString", "TRTypesetterGetSheenBidiText"]);
+const STRUCTS = new Set(["TRPoint", "TRSize", "TRRect", "TRAffineTransform", "TRRange"]);
 
 function stripComments(text) {
   return text.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/^[ \t]*#.*$/gm, " ");

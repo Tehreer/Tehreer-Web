@@ -46,6 +46,8 @@ export interface NativeFunctions {
   _TRComposedFrameGetLineIndexForCodeUnit(frame: number, codeUnitIndex: number): number;
   /** `TRUInteger TRComposedFrameGetLineIndexAtPosition(TRComposedFrameRef frame, TRPoint position)` (struct by value: position) */
   _TRComposedFrameGetLineIndexAtPosition(frame: number, position: number): number;
+  /** `TRUInteger TRComposedFrameGetClusterStartAtPosition(TRComposedFrameRef frame, TRPoint position)` (struct by value: position) */
+  _TRComposedFrameGetClusterStartAtPosition(frame: number, position: number): number;
   /** `TRBoolean TRComposedFrameEnumerateSelection(TRComposedFrameRef frame, TRUInteger index, TRUInteger length, TRSelectionFunc func, void *userData)` */
   _TRComposedFrameEnumerateSelection(frame: number, index: number, length: number, func: number, userData: number): number;
   /** `void TRComposedFrameDraw(TRComposedFrameRef frame, TRRendererRef renderer, TRPoint origin)` (struct by value: origin) */
@@ -88,6 +90,8 @@ export interface NativeFunctions {
   _TRComposedLineEnumerateVisualEdges(line: number, index: number, length: number, func: number, userData: number): number;
   /** `TRUInteger TRComposedLineGetCodeUnitIndexAtDistance(TRComposedLineRef line, TRFloat distance)` */
   _TRComposedLineGetCodeUnitIndexAtDistance(line: number, distance: number): number;
+  /** `TRUInteger TRComposedLineGetClusterStartAtDistance(TRComposedLineRef line, TRFloat distance)` */
+  _TRComposedLineGetClusterStartAtDistance(line: number, distance: number): number;
   /** `TRFloat TRComposedLineGetPenOffset(TRComposedLineRef line, TRFloat flushFactor, TRFloat flushExtent)` */
   _TRComposedLineGetPenOffset(line: number, flushFactor: number, flushExtent: number): number;
   /** `TRRect TRComposedLineComputeInkBox(TRComposedLineRef line, TRRendererRef renderer)` (returns a struct through `ret`) */
@@ -496,44 +500,6 @@ export interface NativeFunctions {
   _TRShapingResultRetain(result: number): number;
   /** `void TRShapingResultRelease(TRShapingResultRef result)` */
   _TRShapingResultRelease(result: number): void;
-  /** `TRTextRef TRTextCreate(const void *string, TRUInteger length, TRStringEncoding encoding)` */
-  _TRTextCreate(string: number, length: number, encoding: number): number;
-  /** `TRTextRef TRTextCreateCopy(TRTextRef text)` */
-  _TRTextCreateCopy(text: number): number;
-  /** `TRMutableTextRef TRTextCreateMutableCopy(TRTextRef text)` */
-  _TRTextCreateMutableCopy(text: number): number;
-  /** `TRStringEncoding TRTextGetEncoding(TRTextRef text)` */
-  _TRTextGetEncoding(text: number): number;
-  /** `TRUInteger TRTextGetLength(TRTextRef text)` */
-  _TRTextGetLength(text: number): number;
-  /** `TRBoolean TRTextGetCodeUnits(TRTextRef text, TRUInteger index, TRUInteger length, void *buffer)` */
-  _TRTextGetCodeUnits(text: number, index: number, length: number, buffer: number): number;
-  /** `TRAttributeListRef TRTextCopyAttributes(TRTextRef text, TRUInteger index, TRUInteger *outLength)` */
-  _TRTextCopyAttributes(text: number, index: number, outLength: number): number;
-  /** `TRTextRef TRTextRetain(TRTextRef text)` */
-  _TRTextRetain(text: number): number;
-  /** `void TRTextRelease(TRTextRef text)` */
-  _TRTextRelease(text: number): void;
-  /** `TRMutableTextRef TRTextCreateMutable(TRStringEncoding encoding)` */
-  _TRTextCreateMutable(encoding: number): number;
-  /** `void TRTextBeginEditing(TRMutableTextRef text)` */
-  _TRTextBeginEditing(text: number): void;
-  /** `void TRTextEndEditing(TRMutableTextRef text)` */
-  _TRTextEndEditing(text: number): void;
-  /** `TRBoolean TRTextAppendCodeUnits(TRMutableTextRef text, const void *codeUnitBuffer, TRUInteger codeUnitCount)` */
-  _TRTextAppendCodeUnits(text: number, codeUnitBuffer: number, codeUnitCount: number): number;
-  /** `TRBoolean TRTextInsertCodeUnits(TRMutableTextRef text, TRUInteger index, const void *codeUnitBuffer, TRUInteger codeUnitCount)` */
-  _TRTextInsertCodeUnits(text: number, index: number, codeUnitBuffer: number, codeUnitCount: number): number;
-  /** `TRBoolean TRTextDeleteCodeUnits(TRMutableTextRef text, TRUInteger index, TRUInteger length)` */
-  _TRTextDeleteCodeUnits(text: number, index: number, length: number): number;
-  /** `TRBoolean TRTextSetCodeUnits(TRMutableTextRef text, const void *codeUnitBuffer, TRUInteger codeUnitCount)` */
-  _TRTextSetCodeUnits(text: number, codeUnitBuffer: number, codeUnitCount: number): number;
-  /** `TRBoolean TRTextReplaceCodeUnits(TRMutableTextRef text, TRUInteger index, TRUInteger length, const void *codeUnitBuffer, TRUInteger codeUnitCount)` */
-  _TRTextReplaceCodeUnits(text: number, index: number, length: number, codeUnitBuffer: number, codeUnitCount: number): number;
-  /** `TRBoolean TRTextSetAttribute(TRMutableTextRef text, TRUInteger index, TRUInteger length, const TRAttribute *attribute)` */
-  _TRTextSetAttribute(text: number, index: number, length: number, attribute: number): number;
-  /** `TRBoolean TRTextRemoveAttribute(TRMutableTextRef text, TRUInteger index, TRUInteger length, TRAttributeType attributeType)` */
-  _TRTextRemoveAttribute(text: number, index: number, length: number, attributeType: number): number;
   /** `TRWeight TRTypefaceGetWeight(TRTypefaceRef typeface)` */
   _TRTypefaceGetWeight(typeface: number): number;
   /** `TRWidth TRTypefaceGetWidth(TRTypefaceRef typeface)` */
@@ -634,10 +600,40 @@ export interface NativeFunctions {
   _TRTypefaceManagerEnumerateTypefaces(callback: number, context: number): void;
   /** `void TRTypefaceManagerEnumerateFamilies(TRTypefaceManagerFamilyCallback callback, void *context)` */
   _TRTypefaceManagerEnumerateFamilies(callback: number, context: number): void;
-  /** `TRTypesetterRef TRTypesetterCreate(TRTextRef text, const TRAttribute *defaultAttributes, TRUInteger defaultAttributeCount)` */
-  _TRTypesetterCreate(text: number, defaultAttributes: number, defaultAttributeCount: number): number;
-  /** `TRUInteger TRTypesetterGetCodeUnitCount(TRTypesetterRef typesetter)` */
-  _TRTypesetterGetCodeUnitCount(typesetter: number): number;
+  /** `TRTypesetterRef TRTypesetterCreate(const void *string, TRUInteger length, TRStringEncoding encoding, const TRAttribute *defaultAttributes, TRUInteger defaultAttributeCount)` */
+  _TRTypesetterCreate(string: number, length: number, encoding: number, defaultAttributes: number, defaultAttributeCount: number): number;
+  /** `TRMutableTypesetterRef TRTypesetterCreateMutable(TRStringEncoding encoding, const TRAttribute *defaultAttributes, TRUInteger defaultAttributeCount)` */
+  _TRTypesetterCreateMutable(encoding: number, defaultAttributes: number, defaultAttributeCount: number): number;
+  /** `TRTypesetterRef TRTypesetterCreateCopy(TRTypesetterRef typesetter)` */
+  _TRTypesetterCreateCopy(typesetter: number): number;
+  /** `TRMutableTypesetterRef TRTypesetterCreateMutableCopy(TRTypesetterRef typesetter)` */
+  _TRTypesetterCreateMutableCopy(typesetter: number): number;
+  /** `TRStringEncoding TRTypesetterGetEncoding(TRTypesetterRef typesetter)` */
+  _TRTypesetterGetEncoding(typesetter: number): number;
+  /** `TRUInteger TRTypesetterGetLength(TRTypesetterRef typesetter)` */
+  _TRTypesetterGetLength(typesetter: number): number;
+  /** `TRBoolean TRTypesetterGetCodeUnits(TRTypesetterRef typesetter, TRUInteger index, TRUInteger length, void *buffer)` */
+  _TRTypesetterGetCodeUnits(typesetter: number, index: number, length: number, buffer: number): number;
+  /** `TRAttributeListRef TRTypesetterCopyAttributes(TRTypesetterRef typesetter, TRUInteger index, TRUInteger *outLength)` */
+  _TRTypesetterCopyAttributes(typesetter: number, index: number, outLength: number): number;
+  /** `void TRTypesetterBeginEditing(TRMutableTypesetterRef typesetter)` */
+  _TRTypesetterBeginEditing(typesetter: number): void;
+  /** `void TRTypesetterEndEditing(TRMutableTypesetterRef typesetter)` */
+  _TRTypesetterEndEditing(typesetter: number): void;
+  /** `TRBoolean TRTypesetterAppendCodeUnits(TRMutableTypesetterRef typesetter, const void *codeUnitBuffer, TRUInteger codeUnitCount)` */
+  _TRTypesetterAppendCodeUnits(typesetter: number, codeUnitBuffer: number, codeUnitCount: number): number;
+  /** `TRBoolean TRTypesetterInsertCodeUnits(TRMutableTypesetterRef typesetter, TRUInteger index, const void *codeUnitBuffer, TRUInteger codeUnitCount)` */
+  _TRTypesetterInsertCodeUnits(typesetter: number, index: number, codeUnitBuffer: number, codeUnitCount: number): number;
+  /** `TRBoolean TRTypesetterDeleteCodeUnits(TRMutableTypesetterRef typesetter, TRUInteger index, TRUInteger length)` */
+  _TRTypesetterDeleteCodeUnits(typesetter: number, index: number, length: number): number;
+  /** `TRBoolean TRTypesetterSetCodeUnits(TRMutableTypesetterRef typesetter, const void *codeUnitBuffer, TRUInteger codeUnitCount)` */
+  _TRTypesetterSetCodeUnits(typesetter: number, codeUnitBuffer: number, codeUnitCount: number): number;
+  /** `TRBoolean TRTypesetterReplaceCodeUnits(TRMutableTypesetterRef typesetter, TRUInteger index, TRUInteger length, const void *codeUnitBuffer, TRUInteger codeUnitCount)` */
+  _TRTypesetterReplaceCodeUnits(typesetter: number, index: number, length: number, codeUnitBuffer: number, codeUnitCount: number): number;
+  /** `TRBoolean TRTypesetterSetAttribute(TRMutableTypesetterRef typesetter, TRUInteger index, TRUInteger length, const TRAttribute *attribute)` */
+  _TRTypesetterSetAttribute(typesetter: number, index: number, length: number, attribute: number): number;
+  /** `TRBoolean TRTypesetterRemoveAttribute(TRMutableTypesetterRef typesetter, TRUInteger index, TRUInteger length, TRAttributeType attributeType)` */
+  _TRTypesetterRemoveAttribute(typesetter: number, index: number, length: number, attributeType: number): number;
   /** `TRUInteger TRTypesetterSuggestForwardBreak(TRTypesetterRef typesetter, TRUInteger index, TRUInteger length, TRFloat extent, TRBreakMode breakMode)` */
   _TRTypesetterSuggestForwardBreak(typesetter: number, index: number, length: number, extent: number, breakMode: number): number;
   /** `TRUInteger TRTypesetterSuggestBackwardBreak(TRTypesetterRef typesetter, TRUInteger index, TRUInteger length, TRFloat extent, TRBreakMode breakMode)` */
@@ -650,6 +646,10 @@ export interface NativeFunctions {
   _TRTypesetterCreateTruncatedLine(typesetter: number, index: number, length: number, extent: number, breakMode: number, truncationPlace: number, tokenLine: number): number;
   /** `TRComposedLineRef TRTypesetterCreateJustifiedLine(TRTypesetterRef typesetter, TRUInteger index, TRUInteger length, TRFloat justificationFactor, TRFloat justificationExtent)` */
   _TRTypesetterCreateJustifiedLine(typesetter: number, index: number, length: number, justificationFactor: number, justificationExtent: number): number;
+  /** `TRUInteger TRTypesetterFindBoundary(TRTypesetterRef typesetter, TRUInteger index, TRBoundaryType type, TRBoundaryDirection direction)` */
+  _TRTypesetterFindBoundary(typesetter: number, index: number, type: number, direction: number): number;
+  /** `TRRange TRTypesetterGetBoundaryRange(TRTypesetterRef typesetter, TRUInteger index, TRBoundaryType type)` (returns a struct through `ret`) */
+  _TRTypesetterGetBoundaryRange(ret: number, typesetter: number, index: number, type: number): void;
   /** `TRTypesetterRef TRTypesetterRetain(TRTypesetterRef typesetter)` */
   _TRTypesetterRetain(typesetter: number): number;
   /** `void TRTypesetterRelease(TRTypesetterRef typesetter)` */

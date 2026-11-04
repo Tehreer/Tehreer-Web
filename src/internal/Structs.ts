@@ -20,7 +20,7 @@ import { type Field, bool, f32, i32, ptr, struct, u32, u8, union } from "./Struc
 /*
  * The structs of Core, in the order of the members of the C declarations, with the names of C.
  * The tests compare every one of them with the sizes and the offsets that the compiler made.
- * A struct that Core takes or returns by value (TRPoint, TRSize, TRRect) is passed through a
+ * A struct that Core takes or returns by value (TRPoint, TRSize, TRRect, TRRange) is passed through a
  * pointer in WebAssembly; the functions of `NativeFunctions` say which.
  */
 
@@ -55,6 +55,7 @@ export function readStringView(pointer: number): string {
 
 export const TRPoint = struct({ x: f32, y: f32 });
 export const TRSize = struct({ width: f32, height: f32 });
+export const TRRange = struct({ index: ptr, length: ptr });
 export const TRRect = struct({ x: f32, y: f32, width: f32, height: f32 });
 export const TRAffineTransform = struct({ a: f32, b: f32, c: f32, d: f32, tx: f32, ty: f32 });
 
@@ -119,6 +120,7 @@ export const structs = {
   TRPoint,
   TRSize,
   TRRect,
+  TRRange,
   TRAffineTransform,
   TRVariationAxis,
   TRBitmapStrike,
