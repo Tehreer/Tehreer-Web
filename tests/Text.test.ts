@@ -16,13 +16,22 @@
 
 import assert from "node:assert/strict";
 import { before, test } from "node:test";
-import { FontFeatures, Replacement, SfntTag, TMutableText, TText, TextAlignment } from "../src/index.js";
+import {
+  BoundaryDirection, BoundaryType, FontFeatures, MutableTypesetter, Replacement, SfntTag, TextAlignment, Typesetter,
+} from "../src/index.js";
 import { ROBOTO, loadFont, ready } from "./Support.js";
 
 before(ready);
 
+/** A mutable typesetter of a string, which has no default attributes. */
+function mutable(text: string): MutableTypesetter {
+  const typesetter = new MutableTypesetter();
+  typesetter.append(text);
+  return typesetter;
+}
+
 test("a text keeps its string", () => {
-  const text = new TText("abc");
+  const text = new Typesetter("abc");
   assert.equal(text.length, 3);
   assert.equal(text.string, "abc");
   assert.equal(text.getString(1, 3), "bc");
@@ -30,18 +39,18 @@ test("a text keeps its string", () => {
   assert.equal(`${text}`, "abc");
   assert.throws(() => text.getString(2, 4), RangeError);
   assert.throws(() => text.getString(2, 1), RangeError);
-  assert.equal(new TText("").length, 0);
+  assert.equal(new Typesetter("").length, 0);
 });
 
 test("indices are code units, as those of a JavaScript string", () => {
-  const text = new TText("a😀ب");
+  const text = new Typesetter("a😀ب");
   assert.equal(text.length, 4);
   assert.equal(text.string, "a😀ب");
   assert.equal(text.getString(1, 3), "😀");
 });
 
 test("a text can be edited", () => {
-  const text = new TMutableText("hello");
+  const text = mutable("hello");
   text.append(" world");
   text.insert(5, ",");
   assert.equal(text.string, "hello, world");
@@ -56,7 +65,7 @@ test("a text can be edited", () => {
 });
 
 test("edits can be batched", () => {
-  const text = new TMutableText();
+  const text = new MutableTypesetter();
   text.edit((editing) => {
     editing.append("a");
     editing.append("b");
@@ -73,19 +82,19 @@ test("edits can be batched", () => {
 });
 
 test("copies are independent", () => {
-  const mutable = new TMutableText("abc");
-  const copy = mutable.copy();
+  const original = mutable("abc");
+  const copy = original.copy();
   const again = copy.mutableCopy();
-  mutable.append("d");
+  original.append("d");
   again.append("e");
   assert.equal(copy.string, "abc");
   assert.equal(again.string, "abce");
-  assert.ok(again instanceof TMutableText);
+  assert.ok(again instanceof MutableTypesetter);
 });
 
 test("attributes are set on ranges, and come back as runs", () => {
   const typeface = loadFont(ROBOTO).typefaces.get(0);
-  const text = new TMutableText("abcde");
+  const text = mutable("abcde");
   text.setAttributes(0, 3, { typeSize: 20, typeface });
   text.setAttributes(2, 5, { foregroundColor: 0xff112233 });
 
@@ -110,7 +119,7 @@ test("attributes are set on ranges, and come back as runs", () => {
 });
 
 test("every kind of attribute is stored and read back", () => {
-  const text = new TMutableText("abc");
+  const text = mutable("abc");
   const replacement = new Replacement({ computeRoom: () => ({ ascent: 1, descent: 1, extent: 1 }) });
   text.setAttributes(0, 3, {
     typeSize: 12.5,
@@ -167,7 +176,7 @@ test("every kind of attribute is stored and read back", () => {
 });
 
 test("attributes are removed from ranges", () => {
-  const text = new TMutableText("abcd");
+  const text = mutable("abcd");
   text.setAttributes(0, 4, { typeSize: 10, underline: true });
   text.removeAttributes(1, 3, "typeSize", "underline");
 
@@ -179,7 +188,7 @@ test("attributes are removed from ranges", () => {
 });
 
 test("replaced text takes the attributes of what it replaces", () => {
-  const text = new TMutableText("abcd");
+  const text = mutable("abcd");
   text.setAttributes(0, 4, { typeSize: 10 });
   text.replace(1, 3, "XYZ");
   assert.equal(text.string, "aXYZd");
@@ -200,7 +209,7 @@ test("font features are a native object too", () => {
 
 test("a very big text makes the memory of the module grow", () => {
   const unit = "ab";
-  const text = new TMutableText();
+  const text = new MutableTypesetter();
   const big = unit.repeat(9_000_000);
   text.append(big);
   text.append("end");
@@ -208,4 +217,68 @@ test("a very big text makes the memory of the module grow", () => {
   assert.equal(text.getString(18_000_000, 18_000_003), "end");
   assert.equal(text.getString(0, 4), "abab");
   text.dispose();
+});
+
+test("attributes can be set in a batch, which shapes the paragraphs once at its end", () => {
+  const typeface = loadFont(ROBOTO).typefaces.get(0);
+  const text = new MutableTypesetter({ typeface, typeSize: 20 });
+  text.edit((editing) => {
+    editing.append("abc abc");
+    editing.setAttributes(0, 3, { typeSize: 10 });
+    editing.setAttributes(4, 7, { typeSize: 40 });
+    assert.throws(() => editing.copy(), /copy/);
+    assert.throws(() => editing.createSimpleLine(0, 3), RangeError);
+  });
+  const line = text.createSimpleLine(0, 7);
+  assert.deepEqual(line.runs.map((run) => run.typeSize), [10, 20, 40]);
+});
+
+test("default attributes fill in what the text does not set", () => {
+  const typeface = loadFont(ROBOTO).typefaces.get(0);
+  const text = new Typesetter("abc", { typeface, typeSize: 30 });
+  assert.equal(text.createSimpleLine(0, 3).runs.get(0).typeSize, 30);
+  assert.equal(text.copy().createSimpleLine(0, 3).runs.get(0).typeSize, 30, "a copy keeps the defaults");
+  assert.equal(text.mutableCopy().createSimpleLine(0, 3).runs.get(0).typeSize, 30);
+});
+
+const SAMPLE = "Hello, big world.\nSecond line";
+
+test("boundaries are found forward and backward", () => {
+  const text = new Typesetter(SAMPLE);
+  assert.equal(text.findBoundary(0, BoundaryType.Word, BoundaryDirection.Forward), 5);
+  assert.equal(text.findBoundary(7, BoundaryType.Word, BoundaryDirection.Backward), 6);
+  assert.equal(text.findBoundary(0, BoundaryType.Paragraph, BoundaryDirection.Forward), 18);
+  assert.equal(text.findBoundary(SAMPLE.length, BoundaryType.Paragraph, BoundaryDirection.Backward), 18);
+  assert.equal(text.findBoundary(SAMPLE.length, BoundaryType.Word, BoundaryDirection.Forward), -1, "nothing after the end");
+  assert.equal(text.findBoundary(0, BoundaryType.Grapheme, BoundaryDirection.Backward), -1, "nothing before the start");
+  assert.equal(text.findBoundary(SAMPLE.length + 1, BoundaryType.Word, BoundaryDirection.Forward), -1, "past the end");
+  assert.throws(() => text.findBoundary(-1, BoundaryType.Word, BoundaryDirection.Forward), RangeError);
+});
+
+test("graphemes are clusters, not code units", () => {
+  const text = new Typesetter("a😀e\u0301b");
+  assert.equal(text.findBoundary(1, BoundaryType.Grapheme, BoundaryDirection.Forward), 3);
+  assert.equal(text.findBoundary(3, BoundaryType.Grapheme, BoundaryDirection.Forward), 5);
+  assert.equal(text.findBoundary(5, BoundaryType.Grapheme, BoundaryDirection.Backward), 3);
+});
+
+test("the range of a segment contains the index", () => {
+  const text = new Typesetter(SAMPLE);
+  assert.deepEqual(text.getBoundaryRange(8, BoundaryType.Word), { startIndex: 7, endIndex: 10 });
+  assert.deepEqual(text.getBoundaryRange(2, BoundaryType.Paragraph), { startIndex: 0, endIndex: 18 });
+  assert.deepEqual(text.getBoundaryRange(SAMPLE.length, BoundaryType.Word), { startIndex: SAMPLE.length, endIndex: SAMPLE.length });
+  assert.equal(text.getBoundaryRange(SAMPLE.length + 1, BoundaryType.Word), undefined);
+});
+
+test("boundaries follow the edits and are not available in a batch", () => {
+  const text = mutable("one two");
+  assert.equal(text.findBoundary(0, BoundaryType.Word, BoundaryDirection.Forward), 3);
+  text.insert(3, "!");
+  assert.equal(text.findBoundary(0, BoundaryType.Word, BoundaryDirection.Forward), 3);
+  assert.equal(text.getBoundaryRange(0, BoundaryType.Word)?.endIndex, 3);
+  text.beginEditing();
+  assert.equal(text.findBoundary(0, BoundaryType.Word, BoundaryDirection.Forward), -1);
+  assert.equal(text.getBoundaryRange(0, BoundaryType.Word), undefined);
+  text.endEditing();
+  assert.equal(text.findBoundary(0, BoundaryType.Word, BoundaryDirection.Forward), 3);
 });

@@ -58,8 +58,6 @@ export {
 export type { DrawingContext } from "./drawing/DrawingContext.js";
 export type { ReplacementBounds, ReplacementDelegate, ReplacementRoom } from "./drawing/ReplacementDelegate.js";
 
-export { TText } from "./layout/TText.js";
-export { TMutableText } from "./layout/TMutableText.js";
 export type {
   ParagraphAttributes,
   RunAttributes,
@@ -69,13 +67,15 @@ export type {
 } from "./layout/TextAttributes.js";
 export { Replacement } from "./layout/Replacement.js";
 export { Typesetter } from "./layout/Typesetter.js";
+export type { CodeUnitRange } from "./layout/Typesetter.js";
+export { MutableTypesetter } from "./layout/MutableTypesetter.js";
 export { FrameResolver } from "./layout/FrameResolver.js";
 export { ComposedFrame } from "./layout/ComposedFrame.js";
 export { ComposedLine } from "./layout/ComposedLine.js";
 export type { VisualEdge } from "./layout/ComposedLine.js";
 export { GlyphRun } from "./layout/GlyphRun.js";
 export { LineLocator } from "./layout/LineLocator.js";
-export { BreakMode, ReplacementKind, TextAlignment, TruncationPlace, VerticalAlignment } from "./layout/enums.js";
+export { BoundaryDirection, BoundaryType, BreakMode, ReplacementKind, TextAlignment, TruncationPlace, VerticalAlignment } from "./layout/enums.js";
 
 export { BaseDirection } from "./unicode/BaseDirection.js";
 export { BidiAlgorithm } from "./unicode/BidiAlgorithm.js";

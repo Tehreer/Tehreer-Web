@@ -16,6 +16,7 @@
 
 import { Typeface } from "../graphics/Typeface.js";
 import { FontFeatures } from "../sfnt/FontFeatures.js";
+import { calloc, free } from "../internal/Memory.js";
 import { Module } from "../internal/Module.js";
 import { TRAttribute } from "../internal/Structs.js";
 import { Replacement } from "./Replacement.js";
@@ -152,4 +153,25 @@ export function attributeNames(attributes: TextAttributes): TextAttributeName[] 
   return (Object.keys(attributes) as TextAttributeName[]).filter(
     (name) => (attributes as Record<string, unknown>)[name] !== undefined,
   );
+}
+
+/**
+ * Writes attributes as the default attributes that Core takes, runs a body with the address and
+ * the count of them, and disposes what was made for the values after it.
+ */
+export function withDefaultAttributes<T>(attributes: TextAttributes, body: (address: number, count: number) => T): T {
+  const names = attributeNames(attributes);
+  const memory = calloc(Math.max(names.length, 1) * TRAttribute.size);
+  const temporaries: (FontFeatures | undefined)[] = [];
+  try {
+    names.forEach((name, index) => {
+      temporaries.push(writeAttribute(memory + index * TRAttribute.size, name, attributes[name]));
+    });
+    return body(memory, names.length);
+  } finally {
+    free(memory);
+    for (const temporary of temporaries) {
+      temporary?.dispose();
+    }
+  }
 }

@@ -85,7 +85,7 @@ export interface TLabelHandle {
  */
 export const TLabel = forwardRef<TLabelHandle, TLabelProps>(function TLabel(props, ref) {
   const {
-    text, attributedText, typesetter, typeface, textSize = DEFAULT_TEXT_SIZE, textAlignment, verticalAlignment,
+    text, typesetter, typeface, textSize = DEFAULT_TEXT_SIZE, textAlignment, verticalAlignment,
     truncationMode, truncationPlace, isTruncationEnabled, maxLines, extraLineSpacing, lineHeightMultiplier,
     height, highlights, highlightColor, onHoverChange, onPressChange, onTap, id, className, style, lang, dir,
     textColor, drawStyle, strokeColor, strokeRadius, strokeCap, strokeJoin, strokeMiter,
@@ -143,7 +143,7 @@ export const TLabel = forwardRef<TLabelHandle, TLabelProps>(function TLabel(prop
       return undefined;
     }
     const scale = window.devicePixelRatio || 1;
-    const resolved = resolveTypesetter({ text, attributedText, typesetter }, typeface, textSize);
+    const resolved = resolveTypesetter({ text, typesetter }, typeface, textSize);
     if (resolved === undefined) {
       frameRef.current = undefined;
       rendererRef.current = undefined;
@@ -203,7 +203,7 @@ export const TLabel = forwardRef<TLabelHandle, TLabelProps>(function TLabel(prop
       renderer.dispose();
     };
   }, [
-    width, text, attributedText, typesetter, typeface, textSize, textAlignment, verticalAlignment, truncationMode,
+    width, text, typesetter, typeface, textSize, textAlignment, verticalAlignment, truncationMode,
     truncationPlace, isTruncationEnabled, maxLines, extraLineSpacing, lineHeightMultiplier, height, textColor,
     drawStyle, strokeColor, strokeRadius, strokeCap, strokeJoin, strokeMiter, shadowColor, shadowRadius, shadowDx,
     shadowDy, paint,
@@ -242,7 +242,7 @@ export const TLabel = forwardRef<TLabelHandle, TLabelProps>(function TLabel(prop
     },
   }, { onHoverChange, onPressChange, onTap });
 
-  const label = props["aria-label"] ?? text ?? attributedText?.string;
+  const label = props["aria-label"] ?? text ?? typesetter?.string;
 
   return (
     <div id={id} ref={wrapper} className={className} style={{ minWidth: 0, overflow: "hidden", ...style }} {...pointer}>

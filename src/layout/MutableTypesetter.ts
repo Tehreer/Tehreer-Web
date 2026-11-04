@@ -15,49 +15,63 @@
  */
 
 import { adopt } from "../internal/Adopt.js";
+import { callingBack } from "../internal/Callbacks.js";
 import { TRAttribute } from "../internal/Structs.js";
 import { StringEncodingUTF16, withStack, withUtf16 } from "../internal/Memory.js";
 import { Module } from "../internal/Module.js";
 import { checkCreated, checkIndex, checkRange } from "../internal/Validation.js";
-import { attributeNames, attributeType, writeAttribute } from "./TextAttributeCodec.js";
+import { attributeNames, attributeType, withDefaultAttributes, writeAttribute } from "./TextAttributeCodec.js";
 import type { TextAttributeName, TextAttributes } from "./TextAttributes.js";
-import { setMutableTextFactory, TText } from "./TText.js";
+import { setMutableTypesetterFactory, Typesetter } from "./Typesetter.js";
 
 /**
- * Text that can be edited. A range that an edit puts in takes the attributes of what it replaces.
+ * A typesetter that can be edited. A range that an edit puts in takes the attributes of what it
+ * replaces. Its paragraphs are shaped as they are edited, or once when a batch of edits ends.
  *
- * A mutable text is not thread safe. Take a copy with `copy()` to lay it out while it is edited.
+ * A mutable typesetter is not thread safe. Take a copy with `copy()` to lay it out while it is
+ * edited. No line can be made, no break suggested and no copy taken while it is in a batch.
  */
-export class TMutableText extends TText {
-  /** Makes a mutable text, which starts with the string if there is one. */
-  constructor(text?: string);
+export class MutableTypesetter extends Typesetter {
+  /**
+   * Makes a mutable typesetter of an empty text.
+   *
+   * @param defaultAttributes The attributes to use where the text sets none, as for `Typesetter`.
+   */
+  constructor(defaultAttributes?: TextAttributes);
   /** @internal */
   constructor(token: typeof adopt, handle: number);
-  constructor(text?: string | typeof adopt, handle?: number) {
-    if (text === adopt) {
+  constructor(defaultAttributes?: TextAttributes | typeof adopt, handle?: number) {
+    if (defaultAttributes === adopt) {
       super(adopt, handle as number);
     } else {
-      super(adopt, checkCreated(Module._TRTextCreateMutable(StringEncodingUTF16), "a mutable text"));
-      if (text !== undefined && text.length > 0) {
-        this.append(text);
-      }
+      super(
+        adopt,
+        checkCreated(
+          withDefaultAttributes(defaultAttributes ?? {}, (memory, count) =>
+            Module._TRTypesetterCreateMutable(StringEncodingUTF16, memory, count),
+          ),
+          "a mutable typesetter",
+        ),
+      );
     }
   }
 
   /**
-   * Starts a batch of edits, whose analysis is deferred until `endEditing()`. Batches do not nest.
+   * Starts a batch of edits, whose analysis and shaping are deferred until `endEditing()`. The
+   * attributes can be set and removed in a batch, so a text with many attributes is built in one,
+   * not by one change after another, each of which shapes its paragraph again. Batches do not nest.
    */
   beginEditing(): void {
-    Module._TRTextBeginEditing(this.nativeHandle);
+    Module._TRTypesetterBeginEditing(this.nativeHandle);
   }
 
   /** Ends a batch of edits, and analyzes the paragraphs that changed. */
   endEditing(): void {
-    Module._TRTextEndEditing(this.nativeHandle);
+    callingBack(() => Module._TRTypesetterEndEditing(this.nativeHandle));
   }
 
   /** Runs the edits that a function makes as one batch. */
-  edit(body: (text: this) => void): void {
+  edit(body: (typesetter: this) => void): void {
     this.beginEditing();
     try {
       body(this);
@@ -70,7 +84,7 @@ export class TMutableText extends TText {
   append(text: string): void {
     const handle = this.nativeHandle;
     withUtf16(text, (units, length) => {
-      if (Module._TRTextAppendCodeUnits(handle, units, length) === 0) {
+      if (callingBack(() => Module._TRTypesetterAppendCodeUnits(handle, units, length)) === 0) {
         throw new Error("Could not append the string.");
       }
     });
@@ -83,9 +97,9 @@ export class TMutableText extends TText {
    */
   insert(index: number, text: string): void {
     const handle = this.nativeHandle;
-    checkIndex("index", index, Module._TRTextGetLength(handle));
+    checkIndex("index", index, Module._TRTypesetterGetLength(handle));
     withUtf16(text, (units, length) => {
-      if (Module._TRTextInsertCodeUnits(handle, index, units, length) === 0) {
+      if (callingBack(() => Module._TRTypesetterInsertCodeUnits(handle, index, units, length)) === 0) {
         throw new Error("Could not insert the string.");
       }
     });
@@ -98,8 +112,8 @@ export class TMutableText extends TText {
    */
   delete(fromIndex: number, toIndex: number): void {
     const handle = this.nativeHandle;
-    checkRange(fromIndex, toIndex, Module._TRTextGetLength(handle));
-    Module._TRTextDeleteCodeUnits(handle, fromIndex, toIndex - fromIndex);
+    checkRange(fromIndex, toIndex, Module._TRTypesetterGetLength(handle));
+    callingBack(() => Module._TRTypesetterDeleteCodeUnits(handle, fromIndex, toIndex - fromIndex));
   }
 
   /**
@@ -110,9 +124,9 @@ export class TMutableText extends TText {
    */
   replace(fromIndex: number, toIndex: number, text: string): void {
     const handle = this.nativeHandle;
-    checkRange(fromIndex, toIndex, Module._TRTextGetLength(handle));
+    checkRange(fromIndex, toIndex, Module._TRTypesetterGetLength(handle));
     withUtf16(text, (units, length) => {
-      if (Module._TRTextReplaceCodeUnits(handle, fromIndex, toIndex - fromIndex, units, length) === 0) {
+      if (callingBack(() => Module._TRTypesetterReplaceCodeUnits(handle, fromIndex, toIndex - fromIndex, units, length)) === 0) {
         throw new Error("Could not replace the code units.");
       }
     });
@@ -122,7 +136,7 @@ export class TMutableText extends TText {
   setString(text: string): void {
     const handle = this.nativeHandle;
     withUtf16(text, (units, length) => {
-      if (Module._TRTextSetCodeUnits(handle, units, length) === 0) {
+      if (callingBack(() => Module._TRTypesetterSetCodeUnits(handle, units, length)) === 0) {
         throw new Error("Could not set the string.");
       }
     });
@@ -137,14 +151,14 @@ export class TMutableText extends TText {
    */
   setAttributes(fromIndex: number, toIndex: number, attributes: TextAttributes): void {
         const handle = this.nativeHandle;
-    checkRange(fromIndex, toIndex, Module._TRTextGetLength(handle));
+    checkRange(fromIndex, toIndex, Module._TRTypesetterGetLength(handle));
 
     for (const name of attributeNames(attributes)) {
       withStack((stack) => {
         const attribute = stack.alloc(TRAttribute.size);
         const temporary = writeAttribute(attribute, name, attributes[name]);
         try {
-          if (Module._TRTextSetAttribute(handle, fromIndex, toIndex - fromIndex, attribute) === 0) {
+          if (callingBack(() => Module._TRTypesetterSetAttribute(handle, fromIndex, toIndex - fromIndex, attribute)) === 0) {
             throw new Error(`Could not set the attribute: ${name}`);
           }
         } finally {
@@ -162,12 +176,12 @@ export class TMutableText extends TText {
    */
   removeAttributes(fromIndex: number, toIndex: number, ...names: TextAttributeName[]): void {
         const handle = this.nativeHandle;
-    checkRange(fromIndex, toIndex, Module._TRTextGetLength(handle));
+    checkRange(fromIndex, toIndex, Module._TRTypesetterGetLength(handle));
     for (const name of names) {
-      Module._TRTextRemoveAttribute(handle, fromIndex, toIndex - fromIndex, attributeType(name));
+      callingBack(() => Module._TRTypesetterRemoveAttribute(handle, fromIndex, toIndex - fromIndex, attributeType(name)));
     }
   }
 }
 
-setMutableTextFactory((handle) => new TMutableText(adopt, handle));
+setMutableTypesetterFactory((handle) => new MutableTypesetter(adopt, handle));
 

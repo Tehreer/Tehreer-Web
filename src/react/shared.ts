@@ -19,18 +19,19 @@ import type { Typeface } from "../graphics/Typeface.js";
 import { Renderer } from "../graphics/Renderer.js";
 import { DrawStyle, StrokeCap, StrokeJoin } from "../graphics/enums.js";
 import { Typesetter } from "../layout/Typesetter.js";
-import type { TText } from "../layout/TText.js";
 
 /** A color as `#rgb`, `#rrggbb` or `#aarrggbb` text (as `Color.parse()` reads it), or as an `0xAARRGGBB` number. */
 export type ColorValue = string | number;
 
-/** Where the text of a widget comes from. A typesetter wins over an attributed text, which wins over a plain string. */
+/** Where the text of a widget comes from. A typesetter wins over a plain string. */
 export interface TextSource {
   /** Plain text, which is shown in `typeface` at `textSize`. */
   readonly text?: string;
-  /** Text with attributes. `typeface` and `textSize` are used where it sets none. */
-  readonly attributedText?: TText;
-  /** A typesetter, which is preferred as it avoids creating one. It stays owned by the caller. */
+  /**
+   * A typesetter, which holds text with attributes and its own default attributes; `typeface` and
+   * `textSize` are not used for it. It stays owned by the caller, and must not be edited while the
+   * widget shows it: pass a copy of a `MutableTypesetter`.
+   */
   readonly typesetter?: Typesetter;
 }
 
@@ -140,15 +141,7 @@ export function resolveTypesetter(
   source: TextSource, typeface: Typeface | undefined, textSize: number,
 ): ResolvedTypesetter | undefined {
   if (source.typesetter !== undefined) {
-    return { typesetter: source.typesetter, length: source.typesetter.codeUnitCount, isOwned: false };
-  }
-  const attributedText = source.attributedText;
-  if (attributedText !== undefined) {
-    if (attributedText.length === 0) {
-      return undefined;
-    }
-    const defaults = typeface === undefined ? { typeSize: textSize } : { typeface, typeSize: textSize };
-    return { typesetter: new Typesetter(attributedText, defaults), length: attributedText.length, isOwned: true };
+    return { typesetter: source.typesetter, length: source.typesetter.length, isOwned: false };
   }
   const text = source.text;
   if (text !== undefined && text.length > 0 && typeface !== undefined) {
