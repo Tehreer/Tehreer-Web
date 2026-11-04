@@ -3,8 +3,7 @@ import {
   ReplacementKind,
   ShapingEngine,
   TextAlignment,
-  TMutableText,
-  Typesetter,
+  MutableTypesetter,
   type TextAttributes,
 } from "@tehreer/web";
 import { z } from "zod";
@@ -139,19 +138,21 @@ function convertAttributes(attributes: JsonAttributes, scope: Scope): TextAttrib
 
 const hasMembers = (value: object): boolean => Object.keys(value).length > 0;
 
-/** Builds the attributed text and its typesetter. Everything made is added to the scope. */
-export function buildTypesetter(spec: TextSpec, scope: Scope): { text: TMutableText; typesetter: Typesetter } {
-  const text = scope.add(new TMutableText(spec.text));
+/** Builds the typesetter of the text with its attributes. Everything made is added to the scope. */
+export function buildTypesetter(spec: TextSpec, scope: Scope): { typesetter: MutableTypesetter } {
   const defaults = convertAttributes(spec.defaults, scope);
-  if (hasMembers(defaults)) {
-    text.setAttributes(0, spec.text.length, defaults);
-  }
-  for (const span of spec.spans ?? []) {
-    if (span.fromIndex >= span.toIndex || span.toIndex > spec.text.length) {
-      throw new RangeError(`Invalid span ${span.fromIndex}..${span.toIndex} for a text of ${spec.text.length} code units.`);
+  const typesetter = scope.add(new MutableTypesetter(defaults));
+  typesetter.edit((editing) => {
+    editing.append(spec.text);
+    if (hasMembers(defaults)) {
+      editing.setAttributes(0, spec.text.length, defaults);
     }
-    text.setAttributes(span.fromIndex, span.toIndex, convertAttributes(span.attributes, scope));
-  }
-  const typesetter = scope.add(new Typesetter(text, defaults));
-  return { text, typesetter };
+    for (const span of spec.spans ?? []) {
+      if (span.fromIndex >= span.toIndex || span.toIndex > spec.text.length) {
+        throw new RangeError(`Invalid span ${span.fromIndex}..${span.toIndex} for a text of ${spec.text.length} code units.`);
+      }
+      editing.setAttributes(span.fromIndex, span.toIndex, convertAttributes(span.attributes, scope));
+    }
+  });
+  return { typesetter };
 }
