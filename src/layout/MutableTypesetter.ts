@@ -26,7 +26,9 @@ import { setMutableTypesetterFactory, Typesetter } from "./Typesetter.js";
 
 /**
  * A typesetter that can be edited. A range that an edit puts in takes the attributes of what it
- * replaces. Its paragraphs are shaped as they are edited, or once when a batch of edits ends.
+ * replaces. An edit whose replacement throws while shaping stays applied, and the error is
+ * rethrown afterwards. Its paragraphs are shaped as they are edited, or once when a batch of
+ * edits ends.
  *
  * A mutable typesetter is not thread safe. Take a copy with `copy()` to lay it out while it is
  * edited. No line can be made, no break suggested and no copy taken while it is in a batch.
@@ -59,7 +61,7 @@ export class MutableTypesetter extends Typesetter {
   /**
    * Starts a batch of edits, whose analysis and shaping are deferred until `endEditing()`. The
    * attributes can be set and removed in a batch, so a text with many attributes is built in one,
-   * not by one change after another, each of which shapes its paragraph again. Batches do not nest.
+   * not by one change after another, each of which shapes its paragraph again. Batches do not nest: a second `beginEditing()` has no effect.
    */
   beginEditing(): void {
     Module._TRTypesetterBeginEditing(this.nativeHandle);
@@ -73,10 +75,24 @@ export class MutableTypesetter extends Typesetter {
   /** Runs the edits that a function makes as one batch. */
   edit(body: (typesetter: this) => void): void {
     this.beginEditing();
+    let failure: unknown;
+    let failed = false;
     try {
       body(this);
-    } finally {
+    } catch (error) {
+      failed = true;
+      failure = error;
+    }
+    try {
       this.endEditing();
+    } catch (error) {
+      // The error of the body is the first cause, so it wins over one from shaping.
+      if (!failed) {
+        throw error;
+      }
+    }
+    if (failed) {
+      throw failure;
     }
   }
 

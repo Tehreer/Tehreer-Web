@@ -72,20 +72,20 @@ export function useSegmentText(
       return undefined;
     }
     const text = new MutableTypesetter({ typeface, typeSize });
-    text.beginEditing();
-    text.append(segments.map((segment) => segment.text).join(""));
-    let index = 0;
-    segments.forEach((segment, i) => {
-      const end = index + segment.text.length;
-      if (segment.color !== undefined && end > index) {
-        text.setAttributes(index, end, {
-          foregroundColor: Color.parse(segment.color),
-          ...(segment.href !== undefined ? { userData: i + 1 } : {}),
-        });
-      }
-      index = end;
+    text.edit((editing) => {
+      editing.append(segments.map((segment) => segment.text).join(""));
+      let index = 0;
+      segments.forEach((segment, i) => {
+        const end = index + segment.text.length;
+        if (segment.color !== undefined && end > index) {
+          editing.setAttributes(index, end, {
+            foregroundColor: Color.parse(segment.color),
+            ...(segment.href !== undefined ? { userData: i + 1 } : {}),
+          });
+        }
+        index = end;
+      });
     });
-    text.endEditing();
     return text;
   }, [segments, typeface, typeSize]);
 }
@@ -104,19 +104,19 @@ export function useSurahText(
     }
     const ranges: { fromIndex: number; toIndex: number }[] = [];
     const text = new MutableTypesetter({ typeface, typeSize });
-    text.beginEditing();
-    ayahs.forEach((ayah, index) => {
-      const offset = text.length;
-      text.append(ayah.text);
-      ranges.push({ fromIndex: offset, toIndex: offset + ayah.text.length });
-      for (const attribute of ayah.attributes) {
-        text.setAttributes(offset + attribute.start, offset + attribute.end, {
-          foregroundColor: Color.parse(`#${attribute.color}`),
-        });
-      }
-      text.append(index === 0 ? "\n" : "  ");
+    text.edit((editing) => {
+      ayahs.forEach((ayah, index) => {
+        const offset = editing.length;
+        editing.append(ayah.text);
+        ranges.push({ fromIndex: offset, toIndex: offset + ayah.text.length });
+        for (const attribute of ayah.attributes) {
+          editing.setAttributes(offset + attribute.start, offset + attribute.end, {
+            foregroundColor: Color.parse(`#${attribute.color}`),
+          });
+        }
+        editing.append(index === 0 ? "\n" : "  ");
+      });
     });
-    text.endEditing();
     return { text, ranges, dispose: () => text.dispose() };
   }, [ayahs, typeface, typeSize], true);
 

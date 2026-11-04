@@ -34,12 +34,21 @@ export function checkRange(fromIndex: number, toIndex: number, limit: number): v
   }
 }
 
+/** The greatest index that fits in the 32 bits of a `TRUInteger`, below `TRInvalidIndex`. */
+const MAX_INDEX = 0xfffffffe;
+
 /**
  * Checks that the range is made of whole numbers, which are not negative and do not decrease. How
  * far it goes is up to Core, which knows the length of the text.
  */
 export function checkOrderedRange(fromIndex: number, toIndex: number): void {
-  if (!Number.isInteger(fromIndex) || !Number.isInteger(toIndex) || fromIndex < 0 || fromIndex > toIndex) {
+  if (
+    !Number.isInteger(fromIndex) ||
+    !Number.isInteger(toIndex) ||
+    fromIndex < 0 ||
+    fromIndex > toIndex ||
+    toIndex > MAX_INDEX
+  ) {
     throw new RangeError(`The range ${fromIndex}..${toIndex} is not valid.`);
   }
 }

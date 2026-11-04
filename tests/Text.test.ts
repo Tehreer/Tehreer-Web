@@ -282,3 +282,19 @@ test("boundaries follow the edits and are not available in a batch", () => {
   text.endEditing();
   assert.equal(text.findBoundary(0, BoundaryType.Word, BoundaryDirection.Forward), 3);
 });
+
+test("indices that do not fit in 32 bits are refused", () => {
+  const text = new Typesetter("hello world");
+  const huge = 2 ** 32 + 3;
+  assert.throws(() => text.findBoundary(huge, BoundaryType.Word, BoundaryDirection.Forward), RangeError);
+  assert.throws(() => text.getBoundaryRange(huge, BoundaryType.Word), RangeError);
+  assert.throws(() => text.getAttributeRun(huge), RangeError);
+  assert.throws(() => text.getAttributeRun(1.5), RangeError);
+});
+
+test("the error of the body of a batch wins over one from shaping", () => {
+  const text = mutable("abc");
+  assert.throws(() => text.edit(() => {
+    throw new Error("body");
+  }), /body/);
+});
