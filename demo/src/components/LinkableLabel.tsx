@@ -51,7 +51,7 @@ export const LinkableLabel = forwardRef<TLabelHandle, LinkableLabelProps>(functi
     [activeLink, linkHighlightColor],
   );
 
-  const text = props.attributedText?.string ?? props.text ?? "";
+  const text = props.typesetter?.string ?? props.text ?? "";
 
   return (
     <>

@@ -15,7 +15,7 @@
  */
 
 import { useEffect, useState } from "react";
-import { Color, TMutableText } from "@tehreer/web";
+import { Color, MutableTypesetter, type Typeface } from "@tehreer/web";
 import type { Ayah } from "../data/surah";
 import { loadEngine } from "./fonts";
 
@@ -26,8 +26,14 @@ export interface Segment {
   readonly href?: string;
 }
 
-/** Makes something once the engine is loaded, and disposes it when the inputs change. */
-export function useEngineObject<T extends { dispose(): void }>(make: () => T, inputs: readonly unknown[]): T | undefined {
+/**
+ * Makes something once the engine is loaded, and disposes it when the inputs change. Making
+ * nothing leaves the object undefined. The old object stays until the new one is made if
+ * `keepOld` is set, so what shows it is not taken away meanwhile.
+ */
+export function useEngineObject<T extends { dispose(): void }>(
+  make: () => T | undefined, inputs: readonly unknown[], keepOld = false,
+): T | undefined {
   const [object, setObject] = useState<T>();
 
   useEffect(() => {
@@ -41,7 +47,9 @@ export function useEngineObject<T extends { dispose(): void }>(make: () => T, in
     });
     return () => {
       isCurrent = false;
-      setObject(undefined);
+      if (!keepOld) {
+        setObject(undefined);
+      }
       // A render that is already under way may still read the object, so it is released a moment later.
       const old = made;
       setTimeout(() => old?.dispose(), 100);
@@ -56,9 +64,16 @@ export function useEngineObject<T extends { dispose(): void }>(make: () => T, in
  * A text of the segments with their colors. A segment with an `href` gets its position plus one as
  * `userData`, which makes it a link in a `TTextView`.
  */
-export function useSegmentText(segments: readonly Segment[]): TMutableText | undefined {
+export function useSegmentText(
+  segments: readonly Segment[], typeface: Typeface | undefined, typeSize: number,
+): MutableTypesetter | undefined {
   return useEngineObject(() => {
-    const text = new TMutableText(segments.map((segment) => segment.text).join(""));
+    if (typeface === undefined) {
+      return undefined;
+    }
+    const text = new MutableTypesetter({ typeface, typeSize });
+    text.beginEditing();
+    text.append(segments.map((segment) => segment.text).join(""));
     let index = 0;
     segments.forEach((segment, i) => {
       const end = index + segment.text.length;
@@ -70,8 +85,9 @@ export function useSegmentText(segments: readonly Segment[]): TMutableText | und
       }
       index = end;
     });
+    text.endEditing();
     return text;
-  }, [segments]);
+  }, [segments, typeface, typeSize]);
 }
 
 /**
@@ -79,10 +95,16 @@ export function useSegmentText(segments: readonly Segment[]): TMutableText | und
  * and two spaces after the others. The ranges of the verses are returned, and the colors of
  * their words are applied in order.
  */
-export function useSurahText(ayahs: readonly Ayah[]): { text: TMutableText; ranges: { fromIndex: number; toIndex: number }[] } | undefined {
+export function useSurahText(
+  ayahs: readonly Ayah[], typeface: Typeface | undefined, typeSize: number,
+): { text: MutableTypesetter; ranges: { fromIndex: number; toIndex: number }[] } | undefined {
   const made = useEngineObject(() => {
+    if (typeface === undefined) {
+      return undefined;
+    }
     const ranges: { fromIndex: number; toIndex: number }[] = [];
-    const text = new TMutableText("");
+    const text = new MutableTypesetter({ typeface, typeSize });
+    text.beginEditing();
     ayahs.forEach((ayah, index) => {
       const offset = text.length;
       text.append(ayah.text);
@@ -94,8 +116,9 @@ export function useSurahText(ayahs: readonly Ayah[]): { text: TMutableText; rang
       }
       text.append(index === 0 ? "\n" : "  ");
     });
+    text.endEditing();
     return { text, ranges, dispose: () => text.dispose() };
-  }, [ayahs]);
+  }, [ayahs, typeface, typeSize], true);
 
   return made;
 }

@@ -29,9 +29,9 @@ const DEFAULT_TEXT_SIZE = 36;
 export function CustomTextViewPage() {
   const font = useFontFile("noorehuda");
   const typeface = useMemo(() => font.value?.typefaces.get(0), [font.value]);
-  const surah = useSurahText(SURAH);
   const [size, setSize] = useState(DEFAULT_TEXT_SIZE);
   const [applied, setApplied] = useState(DEFAULT_TEXT_SIZE);
+  const surah = useSurahText(SURAH, typeface, applied);
   const [selected, setSelected] = useState<number | undefined>();
 
   // Like the Android demo, the verse is deselected when the slider is grabbed and the text is
@@ -71,9 +71,8 @@ export function CustomTextViewPage() {
               selectedAyah={selected}
               onSelectedAyahChange={setSelected}
               scrollContainer="window"
-              attributedText={surah?.text}
+              typesetter={surah?.text}
               typeface={typeface}
-              textSize={applied}
               textColor="#111A14"
               textAlignment={TextAlignment.Center}
               isJustificationEnabled

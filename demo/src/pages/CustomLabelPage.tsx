@@ -39,7 +39,7 @@ const LINKS = (() => {
 export function CustomLabelPage() {
   const font = useFontFile("taj");
   const typeface = useMemo(() => font.value?.typefaces.get(0), [font.value]);
-  const article = useSegmentText(ARTICLE_SEGMENTS);
+  const article = useSegmentText(ARTICLE_SEGMENTS, typeface, 34);
 
   return (
     <>
@@ -49,9 +49,8 @@ export function CustomLabelPage() {
         <WhenReady ready={typeface !== undefined && article !== undefined} error={font.error} what="the typeface">
           <LinkableLabel
             links={LINKS}
-            attributedText={article}
+            typesetter={article}
             typeface={typeface}
-            textSize={34}
             textColor="#1E5A3C"
             textAlignment={TextAlignment.Right}
             drawStyle={DrawStyle.FillStroke}
