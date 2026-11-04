@@ -33,7 +33,7 @@ native/        CMake and exports.json (generated): Core + its dependencies as on
 scripts/       build-wasm.sh, generate-bindings.mjs, generate-unicode-enums.mjs, copy-wasm.mjs
 src/
   graphics/    FontFile, Typeface, TypefaceManager, TypeFamily, Renderer, GlyphCache, GlyphImage, Path
-  layout/      TText, TMutableText, Typesetter, FrameResolver, ComposedFrame/Line, GlyphRun, LineLocator, Replacement
+  layout/      Typesetter, MutableTypesetter, FrameResolver, ComposedFrame/Line, GlyphRun, LineLocator, Replacement
   sfnt/        ShapingEngine, ShapingResult, FontFeatures, SfntTag
   unicode/     BidiAlgorithm, BidiParagraph, BidiLine, BidiRun, BidiPair, ScriptClassifier, ScriptRun, CodePoint,
                BidiClass/GeneralCategory/Script (SheenBidi, as in Tehreer-Android; enums.ts is generated)
@@ -70,7 +70,7 @@ functions and their declarations, so a change of the public API shows up as a ty
   for the caller, the wrapper retains its own, so a child never depends on its parent staying alive.
 - **Names follow the other wrappers.** `startIndex`/`endIndex` for properties, `fromIndex`/`toIndex`
   for range parameters (never `TRRange`), `typeSize`, `strokeRadius`, `computeInkBox`, `isScalable`,
-  `TText`/`TMutableText` (`Text` is a DOM class). Defaults are the ones of Core.
+  `TLabel`/`TTextView`. Defaults are the ones of Core.
 - **Indices are UTF-16 code units**, the indices of a JavaScript string. Invalid ranges throw `RangeError`;
   results that Core reports as "none" are `undefined`, or `-1` for an index.
 - **Colors** are unsigned `0xAARRGGBB` numbers (`Color.argb()`, `Color.parse()`, `Color.toCss()`).
@@ -99,7 +99,7 @@ import { TLabel, TTextView } from "@tehreer/web/react";
 
 <TLabel text="Hello" typeface={typeface} textSize={24} textColor="#14553A" maxLines={2} isTruncationEnabled />
 
-<TTextView attributedText={text} typeface={typeface} textSize={32} isJustificationEnabled
+<TTextView typesetter={typesetter} isJustificationEnabled
            separatorColor="#C9CBC1" style={{ height: 400 }}
            onLinkClick={(userData, from, to) => {}} />
 ```
@@ -107,8 +107,8 @@ import { TLabel, TTextView } from "@tehreer/web/react";
 They follow the widgets of Tehreer-Android and Tehreer-Cocoa: the same property names (`typeface`, `textSize`,
 `textColor`, `textAlignment`, `maxLines`, `isTruncationEnabled`, `truncationMode/Place`, `extraLineSpacing`,
 `lineHeightMultiplier`, `isJustificationEnabled`, `justificationLevel`, `separatorColor`, the draw, stroke and
-shadow settings) and the same sources of text: a `typesetter` (preferred, stays yours), an `attributedText`
-(a `TText`) or a plain `text`. `await initialize()` and load the typeface first. A reference gives
+shadow settings) and the same sources of text: a `typesetter` (text with attributes and its own
+defaults, such as a `MutableTypesetter`; it stays yours and must not be edited while shown) or a plain `text` (shown in `typeface` at `textSize`). `await initialize()` and load the typeface first. A reference gives
 `composedFrame`, `indexOfCodeUnit(x, y)` and `getSelectionRects()`; the text view adds `firstVisibleCodeUnitIndex`,
 `scrollToCodeUnit()`.
 
@@ -118,7 +118,7 @@ shadow settings) and the same sources of text: a `typesetter` (preferred, stays 
   as many as fit the screen, and scrolling draws nothing but the lines that come into view. It keeps the first visible line in place
   when the width changes. `scrollContainer="self"` (the default) makes it a scrolling box; `scrollContainer="window"` makes it as tall
   as its text and lets the page scroll it, which suits a sticky header and sidebar. `useVisibleRange()` and `scrollContentTo()` are the same
-  window-scroll helpers, for lists that draw only what is in view. Runs of the attributed text with a non-zero
+  window-scroll helpers, for lists that draw only what is in view. Runs of the typesetter with a non-zero
   `userData` are links: they are highlighted while pressed and reported to `onLinkClick`.
 - The widgets work with props and callbacks only, like a controlled input. `highlights` (ranges with an optional color) are drawn behind the text and only repaint when they change; `onHoverChange(index)`, `onPressChange(index)` and `onTap(index)` report the code unit under the pointer (a tap on empty space gives `undefined`). Keep the hovered, pressed or selected range in your own state and pass it back as `highlights`: the demo builds a link label and a verse-selecting Quran view this way, as Android does with subclasses.
 - Pass stable values (memoize the typeface and text): a widget lays out again when a property changes identity.
@@ -126,7 +126,7 @@ shadow settings) and the same sources of text: a `typesetter` (preferred, stays 
 
 ## Not included yet
 
-- `TRTextGetSheenBidiText` (the experimental text API of SheenBidi on a `TText`). The `unicode` package wraps the
+- `TRTypesetterGetSheenBidiText` (the experimental text API of SheenBidi on a `Typesetter`). The `unicode` package wraps the
   classic API of SheenBidi, the same classes as Tehreer-Android.
 - Parsers of SFNT tables (`head`, `hhea`, `maxp`, `name`, `OS/2`, `post`); `Typeface.getTableData()` is there.
 - FreeType is built without libpng, so bitmap fonts with PNG glyphs (`CBDT`) have no images.
