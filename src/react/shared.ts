@@ -141,7 +141,8 @@ export function resolveTypesetter(
   source: TextSource, typeface: Typeface | undefined, textSize: number,
 ): ResolvedTypesetter | undefined {
   if (source.typesetter !== undefined) {
-    return { typesetter: source.typesetter, length: source.typesetter.length, isOwned: false };
+    const length = source.typesetter.length;
+    return length === 0 ? undefined : { typesetter: source.typesetter, length, isOwned: false };
   }
   const text = source.text;
   if (text !== undefined && text.length > 0 && typeface !== undefined) {
