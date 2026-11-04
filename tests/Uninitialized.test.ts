@@ -16,11 +16,11 @@
 
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { TText, getVersion, initialize } from "../src/index.js";
+import { Typesetter, getVersion, initialize } from "../src/index.js";
 
 test("objects cannot be made before the module is initialized", async () => {
-  assert.throws(() => new TText("abc"), /not initialized/);
+  assert.throws(() => new Typesetter("abc"), /not initialized/);
   assert.throws(() => getVersion(), /not initialized/);
   await initialize();
-  assert.equal(new TText("abc").length, 3);
+  assert.equal(new Typesetter("abc").length, 3);
 });

@@ -54,3 +54,21 @@ export enum ReplacementKind {
   /** It has a line of its own. */
   Block = 1,
 }
+
+/** The kinds of boundaries that a text can be searched for. */
+export enum BoundaryType {
+  /** Between two grapheme clusters. */
+  Grapheme = 0,
+  /** Between two word segments, which are words, spaces or punctuations. */
+  Word = 1,
+  /** Between two paragraphs, which end with their separator. */
+  Paragraph = 2,
+}
+
+/** The direction of searching for a boundary. */
+export enum BoundaryDirection {
+  /** The last boundary before an index. */
+  Backward = 0,
+  /** The first boundary after an index. */
+  Forward = 1,
+}

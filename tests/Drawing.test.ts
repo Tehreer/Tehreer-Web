@@ -17,7 +17,7 @@
 import assert from "node:assert/strict";
 import { afterEach, before, test } from "node:test";
 import {
-  Color, ComposedFrame, DrawStyle, FrameResolver, GlyphCache, Renderer, Replacement, ReplacementKind, TMutableText, Typesetter,
+  Color, ComposedFrame, DrawStyle, FrameResolver, GlyphCache, Renderer, Replacement, ReplacementKind, MutableTypesetter, Typesetter,
   type ReplacementBounds, type ReplacementDelegate,
 } from "../src/index.js";
 import { setImageSourceFactory } from "../src/drawing/CanvasPainter.js";
@@ -37,10 +37,17 @@ before(() => {
 
 afterEach(() => GlyphCache.default.clear());
 
-function setup(text: string | TMutableText, font = ROBOTO, size = 20) {
+/** A typesetter of a string that can be edited, in Roboto at 20 unless the defaults say otherwise. */
+function styled(text: string) {
+  const typesetter = new MutableTypesetter({ typeface: loadFont(ROBOTO).typefaces.get(0), typeSize: 20 });
+  typesetter.append(text);
+  return typesetter;
+}
+
+function setup(text: string | Typesetter, font = ROBOTO, size = 20) {
   const typeface = loadFont(font).typefaces.get(0);
   const resolver = new FrameResolver();
-  resolver.typesetter = new Typesetter(text, { typeface, typeSize: size });
+  resolver.typesetter = typeof text === "string" ? new Typesetter(text, { typeface, typeSize: size }) : text;
   resolver.frameWidth = 300;
   resolver.frameHeight = 300;
   const frame = resolver.createFrame(0, text.length);
@@ -103,7 +110,7 @@ test("what is cached on a glyph image goes when the image does", () => {
 });
 
 test("backgrounds and decorations are rectangles in their colors", () => {
-  const text = new TMutableText("abcdef");
+  const text = styled("abcdef");
   text.setAttributes(1, 3, { backgroundColor: 0xff00ff00 });
   text.setAttributes(3, 5, { underline: true, strikethrough: true, decorationColor: 0x80102030 });
   const { frame, renderer } = setup(text);
@@ -117,7 +124,7 @@ test("backgrounds and decorations are rectangles in their colors", () => {
 });
 
 test("the foreground color of a run paints its glyphs", () => {
-  const text = new TMutableText("abab");
+  const text = styled("abab");
   text.setAttributes(0, 2, { foregroundColor: 0xff0000ff });
   const { frame, renderer } = setup(text);
   made = 0;
@@ -199,7 +206,7 @@ test("an error of a context is thrown from the draw call, and drawing works afte
 });
 
 function replacementText(delegate: ReplacementDelegate, kind?: ReplacementKind) {
-  const text = new TMutableText("a￼b");
+  const text = styled("a￼b");
   const replacement = new Replacement(delegate, kind);
   text.setAttributes(1, 2, { replacement });
   return { text, replacement };
@@ -246,19 +253,21 @@ test("a block replacement has a line of its own", () => {
 });
 
 test("an error of a delegate is thrown from the call that needed it", () => {
-  const { text } = replacementText({
-    computeRoom() {
-      throw new Error("no room");
-    },
-  });
-  assert.throws(() => new Typesetter(text, { typeface: loadFont(ROBOTO).typefaces.get(0), typeSize: 20 }), /no room/);
+  assert.throws(
+    () => replacementText({
+      computeRoom() {
+        throw new Error("no room");
+      },
+    }),
+    /no room/,
+  );
 
   const typeface = loadFont(ROBOTO).typefaces.get(0);
   const { text: other } = replacementText({ computeRoom: () => ({ ascent: 1, descent: 1, extent: 1 }), draw() {
     throw new Error("cannot draw");
   } });
   const resolver = new FrameResolver();
-  resolver.typesetter = new Typesetter(other, { typeface, typeSize: 20 });
+  resolver.typesetter = other;
   const frame: ComposedFrame = resolver.createFrame(0, 3);
   const renderer = new Renderer();
   renderer.typeface = typeface;
@@ -300,7 +309,7 @@ test("toSvg strokes outlines with the stroke settings", () => {
 });
 
 test("toSvg draws backgrounds, decorations and shadows", () => {
-  const text = new TMutableText("abcdef");
+  const text = styled("abcdef");
   text.setAttributes(1, 3, { backgroundColor: 0xff00ff00 });
   text.setAttributes(3, 5, { underline: true, foregroundColor: 0xff0000ff });
   const { frame, renderer } = setup(text);
@@ -342,10 +351,9 @@ function failingBlockText() {
     } },
     ReplacementKind.Block,
   );
-  const text = new TMutableText("ab￼cd");
+  const text = styled("ab￼cd");
   text.setAttributes(2, 3, { replacement });
-  const typeface = loadFont(ROBOTO).typefaces.get(0);
-  const typesetter = new Typesetter(text, { typeface, typeSize: 20 });
+  const typesetter = text.copy();
   return { replacement, text, typesetter };
 }
 
@@ -381,11 +389,9 @@ test("a line that a delegate fails to lay out does not leak", () => {
 test("a typesetter that a delegate fails to make does not leak, and later calls are not poisoned", () => {
   const before = replacements.size;
   for (let i = 0; i < 20; i++) {
-    const text = new TMutableText("ab￼cd");
+    const text = styled("ab￼cd");
     const replacement = new Replacement({ computeRoom: () => { throw new Error("no room"); } });
-    text.setAttributes(2, 3, { replacement });
-    const typeface = loadFont(ROBOTO).typefaces.get(0);
-    assert.throws(() => new Typesetter(text, { typeface, typeSize: 20 }), /no room/);
+    assert.throws(() => text.setAttributes(2, 3, { replacement }), /no room/);
     text.dispose();
     replacement.dispose();
   }

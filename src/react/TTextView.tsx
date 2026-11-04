@@ -24,7 +24,7 @@ import type { ComposedFrame } from "../layout/ComposedFrame.js";
 import { FrameResolver } from "../layout/FrameResolver.js";
 import { LineLocator } from "../layout/LineLocator.js";
 import { TextAlignment } from "../layout/enums.js";
-import type { TText } from "../layout/TText.js";
+import type { Typesetter } from "../layout/Typesetter.js";
 import { usePointerEvents, type CodeUnitEvents } from "./pointer.js";
 import { measureVisibleRange, observeScroll, scrollContentTo } from "./scroll.js";
 import { assignSlots, NO_SLOTS, type SlotAssignment } from "./slots.js";
@@ -107,8 +107,8 @@ interface Link {
 }
 
 
-/** Finds the runs of an attributed text that have a `userData`. */
-function findLinks(text: TText | undefined): Link[] {
+/** Finds the runs of a typesetter that have a `userData`. */
+function findLinks(text: Typesetter | undefined): Link[] {
   const links: Link[] = [];
   if (text === undefined) {
     return links;
@@ -259,7 +259,7 @@ const LineCanvas = memo(function LineCanvas({ layout, lineIndex, box, highlights
  */
 export const TTextView = forwardRef<TTextViewHandle, TTextViewProps>(function TTextView(props, ref) {
   const {
-    text, attributedText, typesetter, typeface, textSize = DEFAULT_TEXT_SIZE, textAlignment, extraLineSpacing,
+    text, typesetter, typeface, textSize = DEFAULT_TEXT_SIZE, textAlignment, extraLineSpacing,
     lineHeightMultiplier, isJustificationEnabled, justificationLevel, separatorColor, highlightColor, highlights,
     onHoverChange, onPressChange, onTap, isLinkInteractionEnabled = true, onLinkClick, scrollContainer = "self",
     onScroll, id, className, style, lang, dir,
@@ -281,7 +281,7 @@ export const TTextView = forwardRef<TTextViewHandle, TTextViewProps>(function TT
   const onScrollRef = useRef(onScroll);
   onScrollRef.current = onScroll;
 
-  const links = useMemo(() => findLinks(attributedText), [attributedText]);
+  const links = useMemo(() => findLinks(typesetter), [typesetter]);
   const scroller = () => (isWindow ? null : root.current);
 
   useLayoutEffect(() => {
@@ -349,7 +349,7 @@ export const TTextView = forwardRef<TTextViewHandle, TTextViewProps>(function TT
     rememberAnchor(layoutRef.current);
 
     const scale = window.devicePixelRatio || 1;
-    const resolved = resolveTypesetter({ text, attributedText, typesetter }, typeface, textSize);
+    const resolved = resolveTypesetter({ text, typesetter }, typeface, textSize);
     if (resolved === undefined) {
       setLayout(undefined);
       setContentHeight(0);
@@ -409,7 +409,7 @@ export const TTextView = forwardRef<TTextViewHandle, TTextViewProps>(function TT
       setTimeout(() => created.dispose(), 100);
     };
   }, [
-    width, text, attributedText, typesetter, typeface, textSize, textAlignment, extraLineSpacing, lineHeightMultiplier,
+    width, text, typesetter, typeface, textSize, textAlignment, extraLineSpacing, lineHeightMultiplier,
     isJustificationEnabled, justificationLevel, separatorColor, highlightColor, textColor, drawStyle, strokeColor,
     strokeRadius, strokeCap, strokeJoin, strokeMiter, shadowColor, shadowRadius, shadowDx, shadowDy,
   ]);
@@ -557,7 +557,7 @@ export const TTextView = forwardRef<TTextViewHandle, TTextViewProps>(function TT
     }
   }
 
-  const label = props["aria-label"] ?? text ?? attributedText?.string;
+  const label = props["aria-label"] ?? text ?? typesetter?.string;
 
   return (
     <div

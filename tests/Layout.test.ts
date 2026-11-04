@@ -17,7 +17,7 @@
 import assert from "node:assert/strict";
 import { before, test } from "node:test";
 import {
-  BreakMode, ComposedLine, FrameResolver, LineLocator, Renderer, TMutableText, TextAlignment, TruncationPlace, Typesetter,
+  BreakMode, ComposedLine, FrameResolver, LineLocator, Renderer, MutableTypesetter, TextAlignment, TruncationPlace, Typesetter,
   VerticalAlignment, WritingDirection,
 } from "../src/index.js";
 import { NASTALIQ, ROBOTO, loadFont, ready } from "./Support.js";
@@ -39,16 +39,20 @@ function frameOf(width: number, text = TEXT) {
   return { resolver, frame: resolver.createFrame(0, text.length) };
 }
 
-test("a typesetter needs a typeface for every part of the text", () => {
-  assert.throws(() => new Typesetter("abc"), /typesetter/);
+test("no line can be made over a text that has no typeface", () => {
+  const text = new Typesetter("abc");
+  assert.equal(text.length, 3);
+  assert.throws(() => text.createSimpleLine(0, 3), RangeError);
+  assert.throws(() => text.suggestForwardBreak(0, 3, 100, BreakMode.Line), RangeError);
 });
 
 test("a typesetter takes a text with attributes", () => {
-  const text = new TMutableText("abcabc");
+  const text = new MutableTypesetter();
   const typeface = loadFont(ROBOTO).typefaces.get(0);
+  text.append("abcabc");
   text.setAttributes(0, 3, { typeface, typeSize: 10 });
   text.setAttributes(3, 6, { typeface, typeSize: 40 });
-  const line = new Typesetter(text).createSimpleLine(0, 6);
+  const line = text.createSimpleLine(0, 6);
   assert.deepEqual(line.runs.map((run) => run.typeSize), [10, 40]);
   assert.deepEqual(line.runs.map((run) => [run.startIndex, run.endIndex]), [[0, 3], [3, 6]]);
 });
