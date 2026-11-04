@@ -35,7 +35,7 @@ Measurements to use:
 
 Scenarios (each in a loop, once with explicit `dispose()` and once relying on the garbage collector):
 1. `FontFile` create/dispose, `Typeface` instances (`getVariationInstance`, `getColorInstance`), glyph paths, table reads.
-2. `TMutableText` with attributes, `Typesetter`, `FrameResolver`, frames, lines, runs, `getSelectionRects`, `getVisualEdges`, `LineLocator`.
+2. `MutableTypesetter` with attributes and edit batches, `Typesetter`, boundary search, `FrameResolver`, frames, lines, runs, `getSelectionRects`, `getVisualEdges`, `LineLocator`.
 3. Replacements: an inline and a block replacement with delegates; throwing delegates (`computeRoom` and `draw` throwing) must not leak and must rethrow.
 4. Drawing: `frame.draw` into a fake canvas context (see `tests/Support.ts` `RecordingContext` and `setImageSourceFactory` in `src/drawing/CanvasPainter.ts`), and the new `frame.toSvg`, `line.toSvg`, `run.toSvg` (`src/drawing/SvgPainter.ts`), including shadow, stroke and clipping cases, and an error thrown mid draw.
 5. `ShapingEngine`/`ShapingResult`, `BidiAlgorithm`/paragraphs/lines (`BidiBuffer` is reference counted), `ScriptClassifier`, a very long text, and `Renderer` with a changed typeface, glyph cache growth (`GlyphCache.default`) and `clear()`.
