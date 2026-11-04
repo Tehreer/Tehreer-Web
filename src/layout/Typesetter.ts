@@ -126,6 +126,7 @@ export class Typesetter extends NativeObject {
    */
   getAttributeRun(index: number): TextAttributeRun | undefined {
     const handle = this.nativeHandle;
+    checkOrderedRange(0, index);
     return withStack((stack) => {
       const outLength = stack.alloc(4);
       const list = Module._TRTypesetterCopyAttributes(handle, index, outLength);
