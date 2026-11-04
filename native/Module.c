@@ -71,6 +71,11 @@ int tw_layout(char *buffer, int capacity)
     FIELD(TRSize, height, height);
     END();
 
+    BEGIN(TRRange);
+    FIELD(TRRange, index, index);
+    FIELD(TRRange, length, length);
+    END();
+
     BEGIN(TRRect);
     FIELD(TRRect, x, origin.x);
     FIELD(TRRect, y, origin.y);

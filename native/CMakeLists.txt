@@ -31,7 +31,7 @@ include(FetchContent)
 FetchContent_Declare(
   TehreerCore
   GIT_REPOSITORY https://github.com/Tehreer/Tehreer-Core.git
-  GIT_TAG 1d21938eff8931388974d744bc094800501c2a0a
+  GIT_TAG 1a31c671ceb92e45cab4ddb31f7470798d6744ac
   EXCLUDE_FROM_ALL
 )
 FetchContent_MakeAvailable(TehreerCore)
